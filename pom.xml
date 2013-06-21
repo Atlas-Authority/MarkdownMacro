@@ -76,4 +76,9 @@
         <amps.version>4.2.2</amps.version>
         <plugin.testrunner.version>1.1</plugin.testrunner.version>
     </properties>
+    <scm>
+        <connection>scm:git:git@bitbucket.org:atlassianlabs/confluence-markdown-macro.git</connection>
+        <developerConnection>scm:git:git@bitbucket.org:atlassianlabs/confluence-markdown-macro.git</developerConnection>
+        <url>https://bitbucket.org/atlassianlabs/confluence-markdown-macro</url>
+    </scm>
 </project>
