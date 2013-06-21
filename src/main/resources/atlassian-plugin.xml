@@ -1,0 +1,34 @@
+<atlassian-plugin key="${project.groupId}.${project.artifactId}" name="${project.name}" plugins-version="2">
+    <plugin-info>
+        <description>${project.description}</description>
+        <version>${project.version}</version>
+        <vendor name="${project.organization.name}" url="${project.organization.url}" />
+        <param name="plugin-icon">images/pluginIcon.png</param>
+        <param name="plugin-logo">images/pluginLogo.png</param>
+    </plugin-info>
+
+    <xhtml-macro name="markdown"
+                 class="com.atlassian.plugins.confluence.markdown.MarkdownMacro"
+                 key="markdown"
+                 icon="/download/resources/com.atlassian.plugins.confluence.markdown.confluence-markdown-macro/images/pluginIcon.png"
+                 documentation-url="http://daringfireball.net/projects/markdown/">
+        <category name="formatting"/>
+        <parameters>
+            <parameter name="extended" type="boolean" default ="true">
+            </parameter>
+        </parameters>
+    </xhtml-macro>
+    <macro name="markdown"
+           class="com.atlassian.plugins.confluence.markdown.MarkdownMacro"
+           key="markdown.wiki"
+           icon="/download/resources/com.atlassian.plugins.confluence.markdown.confluence-markdown-macro/images/pluginIcon.png"
+           documentation-url="http://daringfireball.net/projects/markdown/">
+        <category name="formatting"/>
+        <parameters>
+            <parameter name="extended" type="boolean" default ="true">
+            </parameter>
+        </parameters>
+    </macro>
+    <resource type="i18n" name="markdown" location="markdownproperties/markdown"/>
+    <resource type="download" name="images/" key="images" location="images/"/>
+</atlassian-plugin>
