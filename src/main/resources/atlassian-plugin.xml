@@ -15,8 +15,6 @@
                  documentation-url="http://daringfireball.net/projects/markdown/">
         <category name="formatting"/>
         <parameters>
-            <parameter name="extended" type="boolean" default ="true">
-            </parameter>
         </parameters>
     </xhtml-macro>
     <macro name="markdown"
@@ -26,8 +24,6 @@
            documentation-url="http://daringfireball.net/projects/markdown/">
         <category name="formatting"/>
         <parameters>
-            <parameter name="extended" type="boolean" default ="true">
-            </parameter>
         </parameters>
     </macro>
     <resource type="i18n" name="markdown" location="markdownproperties/markdown"/>
