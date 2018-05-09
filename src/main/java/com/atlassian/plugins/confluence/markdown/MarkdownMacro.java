@@ -28,6 +28,12 @@ import com.vladsch.flexmark.ext.definition.DefinitionExtension;
 import com.vladsch.flexmark.ext.gfm.tasklist.TaskListExtension;
 import com.vladsch.flexmark.ext.footnotes.FootnoteExtension;
 import com.vladsch.flexmark.ext.wikilink.WikiLinkExtension;
+
+import com.vladsch.flexmark.ext.autolink.AutolinkExtension;
+import com.vladsch.flexmark.ext.anchorlink.AnchorLinkExtension;
+import com.vladsch.flexmark.superscript.SuperscriptExtension;
+import com.vladsch.flexmark.ext.youtube.embedded.YouTubeLinkExtension;
+
 import com.vladsch.flexmark.html.HtmlRenderer;
 import com.vladsch.flexmark.parser.Parser;
 import com.vladsch.flexmark.util.options.MutableDataSet;
@@ -63,12 +69,16 @@ public class MarkdownMacro extends BaseMacro implements Macro
         options.set(Parser.EXTENSIONS, Arrays.asList(
             TablesExtension.create(), 
             StrikethroughSubscriptExtension.create(),
-//            SuperscriptExtension.create(),
             InsExtension.create(),
             TaskListExtension.create(),
             FootnoteExtension.create(),
             WikiLinkExtension.create(),
-            DefinitionExtension.create()
+            DefinitionExtension.create(),
+            AnchorLinkExtension.create(),
+            AutolinkExtension.create(),
+            SuperscriptExtension.create(),
+            YouTubeLinkExtension.create()
+
         ));
 
         
