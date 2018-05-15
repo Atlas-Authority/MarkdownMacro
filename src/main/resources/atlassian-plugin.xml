@@ -12,7 +12,7 @@
                  class="com.atlassian.plugins.confluence.markdown.MarkdownMacro"
                  key="markdown"
                  icon="/download/resources/com.atlassian.plugins.confluence.markdown.confluence-markdown-macro/images/pluginIcon.png"
-                 documentation-url="http://daringfireball.net/projects/markdown/">
+                 documentation-url="https://spec.commonmark.org/0.28/">
         <category name="formatting"/>
         <parameters>
         </parameters>
@@ -21,11 +21,17 @@
            class="com.atlassian.plugins.confluence.markdown.MarkdownMacro"
            key="markdown.wiki"
            icon="/download/resources/com.atlassian.plugins.confluence.markdown.confluence-markdown-macro/images/pluginIcon.png"
-           documentation-url="http://daringfireball.net/projects/markdown/">
+           documentation-url="https://spec.commonmark.org/0.28/">
         <category name="formatting"/>
         <parameters>
         </parameters>
     </macro>
     <resource type="i18n" name="markdown" location="markdownproperties/markdown"/>
     <resource type="download" name="images/" key="images" location="images/"/>
+
+    <web-resource key="highlightjs" name="Highlight.js" >
+        <resource type="download" name="highlight.min.js" location="js/highlight.min.js" />
+        <resource type="download" name="highlight.min.css" location="css/highlight.min.css" />
+    </web-resource>
+
 </atlassian-plugin>
