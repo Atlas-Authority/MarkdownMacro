@@ -89,7 +89,7 @@ public class MarkdownMacro extends BaseMacro implements Macro
             FootnoteExtension.create(),
             WikiLinkExtension.create(),
             DefinitionExtension.create(),
-            AnchorLinkExtension.create(),
+            //AnchorLinkExtension.create(),
             AutolinkExtension.create(),
             SuperscriptExtension.create(),
             YouTubeLinkExtension.create()
@@ -103,11 +103,18 @@ public class MarkdownMacro extends BaseMacro implements Macro
                 "  });\n" +
                 "</script>";
 
+        String highlightjscss = "<style>\n"+
+                ".hljs {display: inline;}\n" +
+                "pre > code {display: block !important;}\n" +
+                "</style>";
+
+
+
         Parser parser = Parser.builder(options).build();
         HtmlRenderer renderer = HtmlRenderer.builder(options).build();
 
         Node document = parser.parse(bodyContent);
-        String html = renderer.render(document ) + highlightjs;  // "<p>This is <em>Sparta</em></p>\n"
+        String html = renderer.render(document ) + highlightjs + highlightjscss;  // "<p>This is <em>Sparta</em></p>\n"
         return html;
 
     }
