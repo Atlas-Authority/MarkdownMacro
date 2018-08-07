@@ -104,7 +104,7 @@
     <properties>
         <confluence.version>6.9.0</confluence.version>
         <confluence.data.version>6.9.0</confluence.data.version>
-        <amps.version>6.2.11</amps.version>
+        <amps.version>6.3.0</amps.version>
         <plugin.testrunner.version>1.1</plugin.testrunner.version>
         <atlassian.spring.scanner.version>2.1.7</atlassian.spring.scanner.version>
     </properties>

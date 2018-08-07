@@ -40,6 +40,8 @@ import com.vladsch.flexmark.html.HtmlRenderer;
 import com.vladsch.flexmark.parser.Parser;
 import com.vladsch.flexmark.util.options.MutableDataSet;
 
+import java.net.*;
+import java.io.*;
 
 //@Scanned
 public class MarkdownMacro extends BaseMacro implements Macro
@@ -105,9 +107,26 @@ public class MarkdownMacro extends BaseMacro implements Macro
 
         Parser parser = Parser.builder(options).build();
         HtmlRenderer renderer = HtmlRenderer.builder(options).build();
-
-        Node document = parser.parse(bodyContent);
-        String html = renderer.render(document ) + highlightjs;  // "<p>This is <em>Sparta</em></p>\n"
+		
+		String toParse = bodyContent;
+		if (parameters.get("URL") != null) {
+			try {
+				String urlParam = parameters.get("URL");
+				URL importFrom = new URL(urlParam);
+				BufferedReader in = new BufferedReader(
+					new InputStreamReader(importFrom.openStream())
+				);
+				String inputLine;
+				toParse = "";
+				while ((inputLine = in.readLine()) != null) {
+					toParse = toParse + "\n" + inputLine;
+				}
+				in.close();
+			}
+			catch (IOException e) {}
+ 		}
+        Node document = parser.parse(toParse);
+        String html = renderer.render(document) + highlightjs;
         return html;
 
     }

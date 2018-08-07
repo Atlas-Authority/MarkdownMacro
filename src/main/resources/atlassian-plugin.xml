@@ -15,6 +15,7 @@
                  documentation-url="https://spec.commonmark.org/0.28/">
         <category name="formatting"/>
         <parameters>
+			<parameter name="URL" type="string" />
         </parameters>
     </xhtml-macro>
     <macro name="markdown"
