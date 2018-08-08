@@ -15,7 +15,7 @@
         <url>http://www.atlassian.com/</url>
     </organization>
     <name>confluence-markdown-macro</name>
-    <description>This plugin provides a Markdown render macro for Confluence.</description>
+    <description>This plugin provides macros to render markdown for Confluence.</description>
     <packaging>atlassian-plugin</packaging>
     <dependencies>
         <dependency>

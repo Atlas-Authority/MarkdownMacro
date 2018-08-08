@@ -40,9 +40,11 @@ import com.vladsch.flexmark.html.HtmlRenderer;
 import com.vladsch.flexmark.parser.Parser;
 import com.vladsch.flexmark.util.options.MutableDataSet;
 
+import java.net.*;
+import java.io.*;
 
 //@Scanned
-public class MarkdownMacro extends BaseMacro implements Macro
+public class MarkdownFromURLMacro extends BaseMacro implements Macro
 {
 
     private final XhtmlContent xhtmlUtils;
@@ -50,12 +52,12 @@ public class MarkdownMacro extends BaseMacro implements Macro
     private PageBuilderService pageBuilderService;
 
     @Autowired
-    public MarkdownMacro(@ComponentImport PageBuilderService pageBuilderService, XhtmlContent xhtmlUtils) {
+    public MarkdownFromURLMacro(@ComponentImport PageBuilderService pageBuilderService, XhtmlContent xhtmlUtils) {
         this.pageBuilderService = pageBuilderService;
         this.xhtmlUtils = xhtmlUtils;
     }
 
-//    public MarkdownMacro(XhtmlContent xhtmlUtils)
+//    public MarkdownFromURLMacro(XhtmlContent xhtmlUtils)
 //    {
 //        this.xhtmlUtils = xhtmlUtils;
 //    }
@@ -103,12 +105,31 @@ public class MarkdownMacro extends BaseMacro implements Macro
                 "  });\n" +
                 "</script>";
 
-        Parser parser = Parser.builder(options).build();
-        HtmlRenderer renderer = HtmlRenderer.builder(options).build();
-
-        Node document = parser.parse(bodyContent);
-        String html = renderer.render(document ) + highlightjs;  // "<p>This is <em>Sparta</em></p>\n"
-        return html;
+		if (bodyContent != null) {
+			Parser parser = Parser.builder(options).build();
+			HtmlRenderer renderer = HtmlRenderer.builder(options).build();
+			
+			String toParse = "";
+			try {
+				URL importFrom = new URL(bodyContent);
+				BufferedReader in = new BufferedReader(
+					new InputStreamReader(importFrom.openStream())
+				);
+				String inputLine;
+				toParse = "";
+				while ((inputLine = in.readLine()) != null) {
+					toParse = toParse + "\n" + inputLine;
+				}
+				in.close();
+			}
+			catch (IOException e) {}
+			
+			Node document = parser.parse(toParse);
+			String html = renderer.render(document) + highlightjs;
+			return html;
+ 		}else {
+			return "";
+		}
 
     }
 
