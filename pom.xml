@@ -90,6 +90,8 @@
                 <configuration>
                     <productVersion>${confluence.version}</productVersion>
                     <productDataVersion>${confluence.data.version}</productDataVersion>
+					<enableQuickReload>true</enableQuickReload>
+					<enableFastdev>false</enableFastdev>
                 </configuration>
             </plugin>
             <plugin>

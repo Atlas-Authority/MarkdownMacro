@@ -105,14 +105,13 @@ public class MarkdownMacro extends BaseMacro implements Macro
                 "  });\n" +
                 "</script>";
 
-        Parser parser = Parser.builder(options).build();
-        HtmlRenderer renderer = HtmlRenderer.builder(options).build();
-		
-		String toParse = bodyContent;
-		if (parameters.get("URL") != null) {
+		if (bodyContent != null) {
+			Parser parser = Parser.builder(options).build();
+			HtmlRenderer renderer = HtmlRenderer.builder(options).build();
+			
+			String toParse = "";
 			try {
-				String urlParam = parameters.get("URL");
-				URL importFrom = new URL(urlParam);
+				URL importFrom = new URL(bodyContent);
 				BufferedReader in = new BufferedReader(
 					new InputStreamReader(importFrom.openStream())
 				);
@@ -124,10 +123,13 @@ public class MarkdownMacro extends BaseMacro implements Macro
 				in.close();
 			}
 			catch (IOException e) {}
- 		}
-        Node document = parser.parse(toParse);
-        String html = renderer.render(document) + highlightjs;
-        return html;
+			
+			Node document = parser.parse(toParse);
+			String html = renderer.render(document) + highlightjs;
+			return html;
+ 		}else {
+			return "";
+		}
 
     }
 

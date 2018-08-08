@@ -14,10 +14,7 @@
                  icon="/download/resources/com.atlassian.plugins.confluence.markdown.confluence-markdown-macro/images/pluginIcon.png"
                  documentation-url="https://spec.commonmark.org/0.28/">
         <category name="formatting"/>
-        <parameters>
-			<parameter name="URL" type="string" />
-        </parameters>
-    </xhtml-macro>
+        <parameters />
     <macro name="markdown"
            class="com.atlassian.plugins.confluence.markdown.MarkdownMacro"
            key="markdown.wiki"
