@@ -102,7 +102,7 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro
 
 
 			String highlightjs = "<script>\n" +
-					"AJS.$('[data-macro-name=\"markdown\"] code').each(function(i, block) {\n" +
+					"AJS.$('[data-macro-name=\"markdown-from-url\"] code').each(function(i, block) {\n" +
 					"    hljs.highlightBlock(block);\n" +
 					"  });\n" +
 					"</script>";
