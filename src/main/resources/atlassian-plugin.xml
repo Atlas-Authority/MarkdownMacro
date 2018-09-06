@@ -7,15 +7,14 @@
         <param name="plugin-logo">images/pluginLogo.png</param>
 	<param name="atlassian-data-center-compatible">true</param>
     </plugin-info>
-
-    <xhtml-macro name="markdown"
+	
+	<xhtml-macro name="markdown"
                  class="com.atlassian.plugins.confluence.markdown.MarkdownMacro"
                  key="markdown"
                  icon="/download/resources/com.atlassian.plugins.confluence.markdown.confluence-markdown-macro/images/pluginIcon.png"
                  documentation-url="https://spec.commonmark.org/0.28/">
         <category name="formatting"/>
-        <parameters>
-        </parameters>
+        <parameters />
     </xhtml-macro>
     <macro name="markdown"
            class="com.atlassian.plugins.confluence.markdown.MarkdownMacro"
@@ -23,10 +22,26 @@
            icon="/download/resources/com.atlassian.plugins.confluence.markdown.confluence-markdown-macro/images/pluginIcon.png"
            documentation-url="https://spec.commonmark.org/0.28/">
         <category name="formatting"/>
-        <parameters>
-        </parameters>
+        <parameters />
+    </macro>
+    <xhtml-macro name="markdown-from-url"
+                 class="com.atlassian.plugins.confluence.markdown.MarkdownFromURLMacro"
+                 key="markdown-from-url"
+                 icon="/download/resources/com.atlassian.plugins.confluence.markdown.confluence-markdown-macro/images/pluginIcon.png"
+                 documentation-url="https://spec.commonmark.org/0.28/">
+        <category name="formatting"/>
+        <parameters />
+	</xhtml-macro>
+    <macro name="markdown-from-url"
+           class="com.atlassian.plugins.confluence.markdown.MarkdownFromURLMacro"
+           key="markdown-from-url.wiki"
+           icon="/download/resources/com.atlassian.plugins.confluence.markdown.confluence-markdown-macro/images/pluginIcon.png"
+           documentation-url="https://spec.commonmark.org/0.28/">
+        <category name="formatting"/>
+        <parameters />
     </macro>
     <resource type="i18n" name="markdown" location="markdownproperties/markdown"/>
+	<resource type="i18n" name="markdown-from-url" location="markdown-from-url-properties/markdown-from-url"/>
     <resource type="download" name="images/" key="images" location="images/"/>
 
     <web-resource key="highlightjs" name="Highlight.js" >
