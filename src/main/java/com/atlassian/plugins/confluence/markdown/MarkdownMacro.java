@@ -2,48 +2,36 @@ package com.atlassian.plugins.confluence.markdown;
 
 import com.atlassian.confluence.content.render.xhtml.ConversionContext;
 import com.atlassian.confluence.content.render.xhtml.DefaultConversionContext;
-import com.atlassian.confluence.content.render.xhtml.XhtmlException;
 import com.atlassian.confluence.macro.Macro;
 import com.atlassian.confluence.macro.MacroExecutionException;
-import com.atlassian.confluence.xhtml.api.MacroDefinition;
-import com.atlassian.confluence.xhtml.api.MacroDefinitionHandler;
 import com.atlassian.confluence.xhtml.api.XhtmlContent;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-
+import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.renderer.RenderContext;
 import com.atlassian.renderer.v2.RenderMode;
 import com.atlassian.renderer.v2.macro.BaseMacro;
 import com.atlassian.renderer.v2.macro.MacroException;
-
-//import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
-import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.webresource.api.assembler.PageBuilderService;
-import org.springframework.beans.factory.annotation.Autowired;
-
 import com.vladsch.flexmark.ast.Node;
-import com.vladsch.flexmark.ext.gfm.strikethrough.StrikethroughSubscriptExtension;
-import com.vladsch.flexmark.ext.tables.TablesExtension;
-import com.vladsch.flexmark.ext.ins.InsExtension;
-import com.vladsch.flexmark.ext.definition.DefinitionExtension;
-import com.vladsch.flexmark.ext.gfm.tasklist.TaskListExtension;
-import com.vladsch.flexmark.ext.footnotes.FootnoteExtension;
-import com.vladsch.flexmark.ext.wikilink.WikiLinkExtension;
-import com.vladsch.flexmark.ext.autolink.AutolinkExtension;
 import com.vladsch.flexmark.ext.anchorlink.AnchorLinkExtension;
-import com.vladsch.flexmark.superscript.SuperscriptExtension;
+import com.vladsch.flexmark.ext.autolink.AutolinkExtension;
+import com.vladsch.flexmark.ext.definition.DefinitionExtension;
+import com.vladsch.flexmark.ext.footnotes.FootnoteExtension;
+import com.vladsch.flexmark.ext.gfm.strikethrough.StrikethroughSubscriptExtension;
+import com.vladsch.flexmark.ext.gfm.tasklist.TaskListExtension;
+import com.vladsch.flexmark.ext.ins.InsExtension;
+import com.vladsch.flexmark.ext.tables.TablesExtension;
+import com.vladsch.flexmark.ext.wikilink.WikiLinkExtension;
 import com.vladsch.flexmark.ext.youtube.embedded.YouTubeLinkExtension;
 import com.vladsch.flexmark.html.HtmlRenderer;
 import com.vladsch.flexmark.parser.Parser;
+import com.vladsch.flexmark.superscript.SuperscriptExtension;
 import com.vladsch.flexmark.util.options.MutableDataSet;
+import org.springframework.beans.factory.annotation.Autowired;
 
+import java.util.Arrays;
+import java.util.Map;
 
-//@Scanned
-public class MarkdownMacro extends BaseMacro implements Macro
-{
+public class MarkdownMacro extends BaseMacro implements Macro {
 
     private final XhtmlContent xhtmlUtils;
 
@@ -55,26 +43,18 @@ public class MarkdownMacro extends BaseMacro implements Macro
         this.xhtmlUtils = xhtmlUtils;
     }
 
-//    public MarkdownMacro(XhtmlContent xhtmlUtils)
-//    {
-//        this.xhtmlUtils = xhtmlUtils;
-//    }
-
     @Override
-    public BodyType getBodyType()
-    {
+    public BodyType getBodyType() {
         return BodyType.PLAIN_TEXT;
     }
 
     @Override
-    public OutputType getOutputType()
-    {
+    public OutputType getOutputType() {
         return OutputType.BLOCK;
     }
 
     @Override
-    public String execute(Map<String, String> parameters, String bodyContent, ConversionContext conversionContext) throws MacroExecutionException
-    {
+    public String execute(Map<String, String> parameters, String bodyContent, ConversionContext conversionContext) throws MacroExecutionException {
 
 
         pageBuilderService.assembler().resources().requireWebResource("com.atlassian.plugins.confluence.markdown.confluence-markdown-macro:highlightjs");
@@ -82,17 +62,17 @@ public class MarkdownMacro extends BaseMacro implements Macro
         MutableDataSet options = new MutableDataSet();
 
         options.set(Parser.EXTENSIONS, Arrays.asList(
-            TablesExtension.create(), 
-            StrikethroughSubscriptExtension.create(),
-            InsExtension.create(),
-            TaskListExtension.create(),
-            FootnoteExtension.create(),
-            WikiLinkExtension.create(),
-            DefinitionExtension.create(),
-            AnchorLinkExtension.create(),
-            AutolinkExtension.create(),
-            SuperscriptExtension.create(),
-            YouTubeLinkExtension.create()
+                TablesExtension.create(),
+                StrikethroughSubscriptExtension.create(),
+                InsExtension.create(),
+                TaskListExtension.create(),
+                FootnoteExtension.create(),
+                WikiLinkExtension.create(),
+                DefinitionExtension.create(),
+                AnchorLinkExtension.create(),
+                AutolinkExtension.create(),
+                SuperscriptExtension.create(),
+                YouTubeLinkExtension.create()
 
         ));
 
@@ -107,7 +87,7 @@ public class MarkdownMacro extends BaseMacro implements Macro
         HtmlRenderer renderer = HtmlRenderer.builder(options).build();
 
         Node document = parser.parse(bodyContent);
-        String html = renderer.render(document ) + highlightjs;  // "<p>This is <em>Sparta</em></p>\n"
+        String html = renderer.render(document) + highlightjs;  // "<p>This is <em>Sparta</em></p>\n"
         return html;
 
     }
@@ -127,7 +107,7 @@ public class MarkdownMacro extends BaseMacro implements Macro
         try {
             return execute(map, s, new DefaultConversionContext(renderContext));
         } catch (MacroExecutionException e) {
-            throw new MacroException(e.getMessage(),e);
+            throw new MacroException(e.getMessage(), e);
         }
     }
 }
