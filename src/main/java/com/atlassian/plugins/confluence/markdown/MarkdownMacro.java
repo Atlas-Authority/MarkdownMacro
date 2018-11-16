@@ -79,7 +79,17 @@ public class MarkdownMacro extends BaseMacro implements Macro
 
         pageBuilderService.assembler().resources().requireWebResource("com.atlassian.plugins.confluence.markdown.confluence-markdown-macro:highlightjs");
 
-        MutableDataSet options = new MutableDataSet();
+        MutableDataSet options = new MutableDataSet()
+                .set(HtmlRenderer.GENERATE_HEADER_ID, true)
+                .set(HtmlRenderer.INDENT_SIZE, 2)
+                .set(HtmlRenderer.PERCENT_ENCODE_URLS, true)
+                // for full GFM table compatibility add the following table extension options:
+
+                .set(TablesExtension.COLUMN_SPANS, false)
+                .set(TablesExtension.APPEND_MISSING_COLUMNS, true)
+                .set(TablesExtension.DISCARD_EXTRA_COLUMNS, true)
+                .set(TablesExtension.HEADER_SEPARATOR_COLUMN_MATCH, true)
+                .set(Parser.EXTENSIONS, Arrays.asList(TablesExtension.create()));
 
         options.set(Parser.EXTENSIONS, Arrays.asList(
             TablesExtension.create(), 
@@ -89,7 +99,7 @@ public class MarkdownMacro extends BaseMacro implements Macro
             FootnoteExtension.create(),
             WikiLinkExtension.create(),
             DefinitionExtension.create(),
-            //AnchorLinkExtension.create(),
+            AnchorLinkExtension.create(),
             AutolinkExtension.create(),
             SuperscriptExtension.create(),
             YouTubeLinkExtension.create()

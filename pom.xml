@@ -9,7 +9,7 @@
     </parent>
     <groupId>com.atlassian.plugins.confluence.markdown</groupId>
     <artifactId>confluence-markdown-macro</artifactId>
-    <version>1.3.4</version>
+    <version>1.4.1</version>
     <organization>
         <name>Atlassian</name>
         <url>http://www.atlassian.com/</url>
@@ -51,27 +51,27 @@
         <dependency>
             <groupId>com.vladsch.flexmark</groupId>
             <artifactId>flexmark-all</artifactId>
-            <version>0.32.24</version>
+            <version>0.34.53</version>
         </dependency>
         <dependency>
             <groupId>com.vladsch.flexmark</groupId>
             <artifactId>flexmark-ext-anchorlink</artifactId>
-            <version>0.32.24</version>
+            <version>0.34.53</version>
         </dependency>
         <dependency>
             <groupId>com.vladsch.flexmark</groupId>
             <artifactId>flexmark-ext-autolink</artifactId>
-            <version>0.32.24</version>
+            <version>0.34.53</version>
         </dependency>
         <dependency>
             <groupId>com.vladsch.flexmark</groupId>
             <artifactId>flexmark-ext-superscript</artifactId>
-            <version>0.32.24</version>
+            <version>0.34.53</version>
         </dependency>
         <dependency>
             <groupId>com.vladsch.flexmark</groupId>
             <artifactId>flexmark-ext-youtube-embedded</artifactId>
-            <version>0.32.24</version>
+            <version>0.34.53</version>
         </dependency>
         <dependency>
             <groupId>com.atlassian.plugin</groupId>
@@ -90,8 +90,8 @@
                 <configuration>
                     <productVersion>${confluence.version}</productVersion>
                     <productDataVersion>${confluence.data.version}</productDataVersion>
-					<enableQuickReload>true</enableQuickReload>
-					<enableFastdev>false</enableFastdev>
+                    <enableQuickReload>true</enableQuickReload>
+                    <enableFastdev>false</enableFastdev>
                 </configuration>
             </plugin>
             <plugin>
@@ -106,7 +106,7 @@
     <properties>
         <confluence.version>6.9.0</confluence.version>
         <confluence.data.version>6.9.0</confluence.data.version>
-        <amps.version>6.3.0</amps.version>
+        <amps.version>6.3.21</amps.version>
         <plugin.testrunner.version>1.1</plugin.testrunner.version>
         <atlassian.spring.scanner.version>2.1.7</atlassian.spring.scanner.version>
     </properties>
