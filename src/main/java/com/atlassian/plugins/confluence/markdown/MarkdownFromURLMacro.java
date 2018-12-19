@@ -79,8 +79,8 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
                     .set(TablesExtension.APPEND_MISSING_COLUMNS, true)
                     .set(TablesExtension.DISCARD_EXTRA_COLUMNS, true)
                     .set(TablesExtension.HEADER_SEPARATOR_COLUMN_MATCH, true)
-                    .set(Parser.EXTENSIONS, Arrays.asList(TablesExtension.create()))
-                    ;
+                    .set(TablesExtension.CLASS_NAME, "confluenceTable")
+                    .set(Parser.EXTENSIONS, Arrays.asList(TablesExtension.create()));
 
 			options.set(Parser.EXTENSIONS, Arrays.asList(
 				TablesExtension.create(), 
@@ -99,10 +99,23 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 
 
 			String highlightjs = "<script>\n" +
-					"AJS.$('[data-macro-name=\"markdown\"] code').each(function(i, block) {\n" +
+					"AJS.$('[data-macro-name=\"markdown-from-url\"] code').each(function(i, block) {\n" +
 					"    hljs.highlightBlock(block);\n" +
 					"  });\n" +
 					"</script>";
+
+			String highlightjscss = "<style>\n"+
+					".hljs {display: inline;}\n" +
+					"pre > code {display: block !important;}\n" +
+					"</style>";
+
+			String tableFixJs = "<script>AJS.$('[data-macro-name=\"markdown-from-url\"] table thead th').each(function(i, block) {\n" +
+                    "    block.classList.add(\"confluenceTh\");\n" +
+                    "});\n" +
+                    "\n" +
+                    "AJS.$('[data-macro-name=\"markdown-from-url\"] table tbody tr td').each(function(i, block) {\n" +
+                    "    block.classList.add(\"confluenceTd\");\n" +
+                    "});</script>";
 
 			class privateRepositoryException extends Exception {
 				public privateRepositoryException(String message) {
@@ -131,7 +144,7 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 					throw new privateRepositoryException("Cannot import from private repository.");
 				}else {
 					Node document = parser.parse(toParse);
-					html = renderer.render(document) + highlightjs;
+					html = renderer.render(document) + highlightjs + highlightjscss + tableFixJs;
 				}
 			}
 			catch (MalformedURLException u) {

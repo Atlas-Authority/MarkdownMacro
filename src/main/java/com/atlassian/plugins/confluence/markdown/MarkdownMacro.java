@@ -69,6 +69,7 @@ public class MarkdownMacro extends BaseMacro implements Macro {
                 .set(TablesExtension.APPEND_MISSING_COLUMNS, true)
                 .set(TablesExtension.DISCARD_EXTRA_COLUMNS, true)
                 .set(TablesExtension.HEADER_SEPARATOR_COLUMN_MATCH, true)
+                .set(TablesExtension.CLASS_NAME, "confluenceTable")
                 .set(Parser.EXTENSIONS, Arrays.asList(TablesExtension.create()));
 
         options.set(Parser.EXTENSIONS, Arrays.asList(
@@ -98,6 +99,13 @@ public class MarkdownMacro extends BaseMacro implements Macro {
                 "pre > code {display: block !important;}\n" +
                 "</style>";
 
+        String tableFixJs = "<script> AJS.$('[data-macro-name=\"markdown\"] table thead th').each(function(i, block) {\n" +
+                "    block.classList.add(\"confluenceTh\");\n" +
+                "});\n" +
+                "\n" +
+                "AJS.$('[data-macro-name=\"markdown\"] table tbody tr td').each(function(i, block) {\n" +
+                "    block.classList.add(\"confluenceTd\");\n" +
+                "});</script>";
 
 
         Parser parser = Parser.builder(options).build();
@@ -105,7 +113,7 @@ public class MarkdownMacro extends BaseMacro implements Macro {
 
         Node document = parser.parse(bodyContent);
 
-        String html = renderer.render(document ) + highlightjs + highlightjscss;  // "<p>This is <em>Sparta</em></p>\n"
+        String html = renderer.render(document ) + highlightjs + highlightjscss + tableFixJs;  // "<p>This is <em>Sparta</em></p>\n"
 
         return html;
 
