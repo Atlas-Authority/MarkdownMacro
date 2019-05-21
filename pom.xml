@@ -9,7 +9,7 @@
     </parent>
     <groupId>com.atlassian.plugins.confluence.markdown</groupId>
     <artifactId>confluence-markdown-macro</artifactId>
-    <version>1.4.2</version>
+    <version>1.4.3</version>
     <organization>
         <name>Atlassian</name>
         <url>http://www.atlassian.com/</url>
@@ -84,7 +84,7 @@
         <plugins>
             <plugin>
                 <groupId>com.atlassian.maven.plugins</groupId>
-                <artifactId>maven-confluence-plugin</artifactId>
+                <artifactId>confluence-maven-plugin</artifactId>
                 <version>${amps.version}</version>
                 <extensions>true</extensions>
                 <configuration>
@@ -106,7 +106,7 @@
     <properties>
         <confluence.version>6.9.0</confluence.version>
         <confluence.data.version>6.9.0</confluence.data.version>
-        <amps.version>6.3.21</amps.version>
+        <amps.version>8.0.0</amps.version>
         <plugin.testrunner.version>1.1</plugin.testrunner.version>
         <atlassian.spring.scanner.version>2.1.7</atlassian.spring.scanner.version>
     </properties>
