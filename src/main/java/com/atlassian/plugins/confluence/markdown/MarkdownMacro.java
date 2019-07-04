@@ -22,6 +22,7 @@ import com.vladsch.flexmark.ext.ins.InsExtension;
 import com.vladsch.flexmark.ext.tables.TablesExtension;
 import com.vladsch.flexmark.ext.wikilink.WikiLinkExtension;
 import com.vladsch.flexmark.ext.youtube.embedded.YouTubeLinkExtension;
+import com.vladsch.flexmark.ext.toc.TocExtension;
 import com.vladsch.flexmark.html.HtmlRenderer;
 import com.vladsch.flexmark.parser.Parser;
 import com.vladsch.flexmark.superscript.SuperscriptExtension;
@@ -63,6 +64,7 @@ public class MarkdownMacro extends BaseMacro implements Macro {
                 .set(HtmlRenderer.GENERATE_HEADER_ID, true)
                 .set(HtmlRenderer.INDENT_SIZE, 2)
                 .set(HtmlRenderer.PERCENT_ENCODE_URLS, true)
+                .set(HtmlRenderer.ESCAPE_HTML, true)
                 // for full GFM table compatibility add the following table extension options:
 
                 .set(TablesExtension.COLUMN_SPANS, false)
@@ -83,7 +85,8 @@ public class MarkdownMacro extends BaseMacro implements Macro {
                 AnchorLinkExtension.create(),
                 AutolinkExtension.create(),
                 SuperscriptExtension.create(),
-                YouTubeLinkExtension.create()
+                YouTubeLinkExtension.create(),
+                TocExtension.create()
 
         ));
 

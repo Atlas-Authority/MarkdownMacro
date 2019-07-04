@@ -9,12 +9,12 @@
     </parent>
     <groupId>com.atlassian.plugins.confluence.markdown</groupId>
     <artifactId>confluence-markdown-macro</artifactId>
-    <version>1.4.3</version>
+    <version>1.5.3</version>
     <organization>
         <name>Atlassian</name>
         <url>http://www.atlassian.com/</url>
     </organization>
-    <name>confluence-markdown-macro</name>
+    <name>Markdown Macro for Confluence</name>
     <description>This plugin provides macros to render markdown for Confluence.</description>
     <packaging>atlassian-plugin</packaging>
     <dependencies>
@@ -51,27 +51,32 @@
         <dependency>
             <groupId>com.vladsch.flexmark</groupId>
             <artifactId>flexmark-all</artifactId>
-            <version>0.34.53</version>
+            <version>0.35.10</version>
         </dependency>
         <dependency>
             <groupId>com.vladsch.flexmark</groupId>
             <artifactId>flexmark-ext-anchorlink</artifactId>
-            <version>0.34.53</version>
+            <version>0.35.10</version>
         </dependency>
         <dependency>
             <groupId>com.vladsch.flexmark</groupId>
             <artifactId>flexmark-ext-autolink</artifactId>
-            <version>0.34.53</version>
+            <version>0.35.10</version>
         </dependency>
         <dependency>
             <groupId>com.vladsch.flexmark</groupId>
             <artifactId>flexmark-ext-superscript</artifactId>
-            <version>0.34.53</version>
+            <version>0.35.10</version>
         </dependency>
         <dependency>
             <groupId>com.vladsch.flexmark</groupId>
             <artifactId>flexmark-ext-youtube-embedded</artifactId>
-            <version>0.34.53</version>
+            <version>0.35.10</version>
+        </dependency>
+        <dependency>
+            <groupId>com.vladsch.flexmark</groupId>
+            <artifactId>flexmark-ext-toc</artifactId>
+            <version>0.35.10</version>
         </dependency>
         <dependency>
             <groupId>com.atlassian.plugin</groupId>

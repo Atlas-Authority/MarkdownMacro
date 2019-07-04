@@ -20,6 +20,7 @@ import com.vladsch.flexmark.ext.gfm.strikethrough.StrikethroughSubscriptExtensio
 import com.vladsch.flexmark.ext.gfm.tasklist.TaskListExtension;
 import com.vladsch.flexmark.ext.ins.InsExtension;
 import com.vladsch.flexmark.ext.tables.TablesExtension;
+import com.vladsch.flexmark.ext.toc.TocExtension;
 import com.vladsch.flexmark.ext.wikilink.WikiLinkExtension;
 import com.vladsch.flexmark.ext.youtube.embedded.YouTubeLinkExtension;
 import com.vladsch.flexmark.html.HtmlRenderer;
@@ -73,6 +74,7 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
                     .set(HtmlRenderer.GENERATE_HEADER_ID, true)
                     .set(HtmlRenderer.INDENT_SIZE, 2)
                     .set(HtmlRenderer.PERCENT_ENCODE_URLS, true)
+					.set(HtmlRenderer.ESCAPE_HTML, true)
                     // for full GFM table compatibility add the following table extension options:
 
                     .set(TablesExtension.COLUMN_SPANS, false)
@@ -93,7 +95,8 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 				AnchorLinkExtension.create(),
 				AutolinkExtension.create(),
 				SuperscriptExtension.create(),
-				YouTubeLinkExtension.create()
+				YouTubeLinkExtension.create(),
+				TocExtension.create()
 
 			));
 
