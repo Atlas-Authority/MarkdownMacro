@@ -38,6 +38,8 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.Map;
 
+import java.net.InetAddress;
+
 
 public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 
@@ -68,6 +70,7 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
     {
 
 		if (bodyContent != null) {
+
 			pageBuilderService.assembler().resources().requireWebResource("com.atlassian.plugins.confluence.markdown.confluence-markdown-macro:highlightjs");
 
 			MutableDataSet options = new MutableDataSet()
@@ -133,7 +136,14 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 			String html = "";
 			String toParse = "";
 			try {
+
 				URL importFrom = new URL(bodyContent);
+				if(!importFrom.getProtocol().startsWith("http"))
+					throw new MalformedURLException();
+				InetAddress inetAddress = InetAddress.getByName(importFrom.getHost());
+				if(inetAddress.isAnyLocalAddress() || inetAddress.isLoopbackAddress() || inetAddress.isLinkLocalAddress())
+					throw new MalformedURLException();
+
 				BufferedReader in = new BufferedReader(
 					new InputStreamReader(importFrom.openStream())
 				);
