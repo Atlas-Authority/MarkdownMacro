@@ -14,3 +14,5 @@ This macro supports the following languages:
 *   English
 *   French
 *   German
+
+This macro DOES NOT support inline HTML. This functionality was removed due to it being perceived as a security vulnerability.
