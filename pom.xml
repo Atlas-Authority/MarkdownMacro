@@ -9,10 +9,10 @@
     </parent>
     <groupId>com.atlassian.plugins.confluence.markdown</groupId>
     <artifactId>confluence-markdown-macro</artifactId>
-    <version>1.5.4</version>
+    <version>1.5.5</version>
     <organization>
-        <name>Atlassian</name>
-        <url>http://www.atlassian.com/</url>
+        <name>Atlas Authority</name>
+        <url>https://atlasauthority.com</url>
     </organization>
     <name>Markdown Macro for Confluence</name>
     <description>This plugin provides macros to render markdown for Confluence.</description>
@@ -78,6 +78,7 @@
             <artifactId>flexmark-ext-toc</artifactId>
             <version>0.35.10</version>
         </dependency>
+
         <dependency>
             <groupId>com.atlassian.plugin</groupId>
             <artifactId>atlassian-spring-scanner-annotation</artifactId>
