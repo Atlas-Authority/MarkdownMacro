@@ -6,6 +6,7 @@
         <param name="plugin-icon">images/pluginIcon.png</param>
         <param name="plugin-logo">images/pluginLogo.png</param>
 	<param name="atlassian-data-center-compatible">true</param>
+    <param name="read-only-access-mode-compatible">true</param>
     <param name="atlassian-data-center-status">compatible</param>
     </plugin-info>
 	
