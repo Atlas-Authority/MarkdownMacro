@@ -123,11 +123,44 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
                     "    block.classList.add(\"confluenceTd\");\n" +
                     "});</script>";
 
+			String tableFixCSS = "<style>\n" +
+					"[data-macro-name=\"markdown-from-url\"] table thead th, [data-macro-name=\"markdown\"] table thead th{\n" +
+					"\tborder: 1px solid #c1c7d0;\n" +
+					"\tpadding: 7px 10px;\n" +
+					"\tvertical-align: top;\n" +
+					"\ttext-align: left;\n" +
+					"\tmin-width: 8px;\n" +
+					"\tbackground: #f4f5f7 center right no-repeat;\n" +
+					"\tpadding-right: 15px;\n" +
+					"\tcursor: pointer;\n" +
+					"\tfont-weight: bold;\n" +
+					"}\n" +
+					"[data-macro-name=\"markdown-from-url\"] table tbody tr td, [data-macro-name=\"markdown\"] table tbody tr td{\n" +
+					"\tborder: 1px solid #c1c7d0;\n" +
+					"\tpadding: 7px 10px;\n" +
+					"\tvertical-align: top;\n" +
+					"\ttext-align: left;\n" +
+					"\tmin-width: 8px;\n" +
+					"}\n" +
+					"</style>";
+
 			class privateRepositoryException extends Exception {
 				public privateRepositoryException(String message) {
 					super(message);
 				}
 			}
+
+			String tableFix = "";
+
+			if(RenderContext.EMAIL.equals(conversionContext.getPageContext()))
+				tableFix = tableFixCSS;
+			else if(RenderContext.PDF.equals(conversionContext.getPageContext()))
+				tableFix = tableFixCSS;
+			else if(RenderContext.WORD.equals(conversionContext.getPageContext()))
+				tableFix = tableFixCSS;
+			else
+				tableFix = tableFixJs;
+
 			
 			Parser parser = Parser.builder(options).build();
 			HtmlRenderer renderer = HtmlRenderer.builder(options).build();
@@ -157,7 +190,7 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 					throw new privateRepositoryException("Cannot import from private repository.");
 				}else {
 					Node document = parser.parse(toParse);
-					html = renderer.render(document) + highlightjs + highlightjscss + tableFixJs;
+					html = renderer.render(document) + tableFix +  highlightjs + highlightjscss;
 				}
 			}
 			catch (MalformedURLException u) {

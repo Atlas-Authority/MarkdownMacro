@@ -97,7 +97,7 @@ public class MarkdownMacro extends BaseMacro implements Macro {
                 "  });\n" +
                 "</script>";
 
-        String highlightjscss = "<style>\n"+
+        String highlightjscss = "<style>\n" +
                 ".hljs {display: inline;}\n" +
                 "pre > code {display: block !important;}\n" +
                 "</style>";
@@ -110,13 +110,45 @@ public class MarkdownMacro extends BaseMacro implements Macro {
                 "    block.classList.add(\"confluenceTd\");\n" +
                 "});</script>";
 
+        String tableFixCSS = "<style>\n" +
+                "[data-macro-name=\"markdown-from-url\"] table thead th, [data-macro-name=\"markdown\"] table thead th{\n" +
+                "\tborder: 1px solid #c1c7d0;\n" +
+                "\tpadding: 7px 10px;\n" +
+                "\tvertical-align: top;\n" +
+                "\ttext-align: left;\n" +
+                "\tmin-width: 8px;\n" +
+                "\tbackground: #f4f5f7 center right no-repeat;\n" +
+                "\tpadding-right: 15px;\n" +
+                "\tcursor: pointer;\n" +
+                "\tfont-weight: bold;\n" +
+                "}\n" +
+                "[data-macro-name=\"markdown-from-url\"] table tbody tr td, [data-macro-name=\"markdown\"] table tbody tr td{\n" +
+                "\tborder: 1px solid #c1c7d0;\n" +
+                "\tpadding: 7px 10px;\n" +
+                "\tvertical-align: top;\n" +
+                "\ttext-align: left;\n" +
+                "\tmin-width: 8px;\n" +
+                "}\n" +
+                "</style>";
+
+        String tableFix = "";
+
+        if(RenderContext.EMAIL.equals(conversionContext.getPageContext()))
+            tableFix = tableFixCSS;
+        else if(RenderContext.PDF.equals(conversionContext.getPageContext()))
+            tableFix = tableFixCSS;
+        else if(RenderContext.WORD.equals(conversionContext.getPageContext()))
+            tableFix = tableFixCSS;
+        else
+            tableFix = tableFixJs;
+
 
         Parser parser = Parser.builder(options).build();
         HtmlRenderer renderer = HtmlRenderer.builder(options).build();
 
         Node document = parser.parse(bodyContent);
 
-        String html = renderer.render(document ) + highlightjs + highlightjscss + tableFixJs;  // "<p>This is <em>Sparta</em></p>\n"
+        String html = renderer.render(document) + tableFix +  highlightjs + highlightjscss;  // "<p>This is <em>Sparta</em></p>\n"
 
         return html;
 
