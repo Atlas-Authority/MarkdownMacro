@@ -40,6 +40,9 @@ import java.util.Map;
 
 import java.net.InetAddress;
 
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.*;
+import org.jsoup.select.*;
 
 public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 
@@ -115,53 +118,12 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 					"pre > code {display: block !important;}\n" +
 					"</style>";
 
-			String tableFixJs = "<script>AJS.$('[data-macro-name=\"markdown-from-url\"] table thead th').each(function(i, block) {\n" +
-                    "    block.classList.add(\"confluenceTh\");\n" +
-                    "});\n" +
-                    "\n" +
-                    "AJS.$('[data-macro-name=\"markdown-from-url\"] table tbody tr td').each(function(i, block) {\n" +
-                    "    block.classList.add(\"confluenceTd\");\n" +
-                    "});</script>";
-
-			String tableFixCSS = "<style>\n" +
-					"[data-macro-name=\"markdown-from-url\"] table thead th, [data-macro-name=\"markdown\"] table thead th{\n" +
-					"\tborder: 1px solid #c1c7d0;\n" +
-					"\tpadding: 7px 10px;\n" +
-					"\tvertical-align: top;\n" +
-					"\ttext-align: left;\n" +
-					"\tmin-width: 8px;\n" +
-					"\tbackground: #f4f5f7 center right no-repeat;\n" +
-					"\tpadding-right: 15px;\n" +
-					"\tcursor: pointer;\n" +
-					"\tfont-weight: bold;\n" +
-					"}\n" +
-					"[data-macro-name=\"markdown-from-url\"] table tbody tr td, [data-macro-name=\"markdown\"] table tbody tr td{\n" +
-					"\tborder: 1px solid #c1c7d0;\n" +
-					"\tpadding: 7px 10px;\n" +
-					"\tvertical-align: top;\n" +
-					"\ttext-align: left;\n" +
-					"\tmin-width: 8px;\n" +
-					"}\n" +
-					"</style>";
-
 			class privateRepositoryException extends Exception {
 				public privateRepositoryException(String message) {
 					super(message);
 				}
 			}
 
-			String tableFix = "";
-
-			if(RenderContext.EMAIL.equals(conversionContext.getPageContext()))
-				tableFix = tableFixCSS;
-			else if(RenderContext.PDF.equals(conversionContext.getPageContext()))
-				tableFix = tableFixCSS;
-			else if(RenderContext.WORD.equals(conversionContext.getPageContext()))
-				tableFix = tableFixCSS;
-			else
-				tableFix = tableFixJs;
-
-			
 			Parser parser = Parser.builder(options).build();
 			HtmlRenderer renderer = HtmlRenderer.builder(options).build();
 			
@@ -190,7 +152,22 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 					throw new privateRepositoryException("Cannot import from private repository.");
 				}else {
 					Node document = parser.parse(toParse);
-					html = renderer.render(document) + tableFix +  highlightjs + highlightjscss;
+					String htmlBody = renderer.render(document);
+
+					Document doc = Jsoup.parseBodyFragment(htmlBody);
+					Element body = doc.body();
+					Elements th = body.getElementsByTag("th");
+					Elements td = body.getElementsByTag("td");
+					for (Element thi : th) {
+						thi.addClass("confluenceTh");
+					}
+					for (Element tdi : td) {
+						tdi.addClass("confluenceTd");
+					}
+
+					html =  body.html() +  highlightjs + highlightjscss;
+
+					return html;
 				}
 			}
 			catch (MalformedURLException u) {
