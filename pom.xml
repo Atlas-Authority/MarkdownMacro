@@ -9,7 +9,7 @@
     </parent>
     <groupId>com.atlassian.plugins.confluence.markdown</groupId>
     <artifactId>confluence-markdown-macro</artifactId>
-    <version>1.5.7</version>
+    <version>1.5.8</version>
     <organization>
         <name>Atlas Authority</name>
         <url>https://atlasauthority.com</url>

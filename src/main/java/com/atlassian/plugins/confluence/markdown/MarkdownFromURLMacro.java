@@ -40,6 +40,8 @@ import java.util.Map;
 
 import java.net.InetAddress;
 
+import java.nio.charset.StandardCharsets;
+
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.*;
 import org.jsoup.select.*;
@@ -140,7 +142,7 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 					throw new MalformedURLException();
 
 				BufferedReader in = new BufferedReader(
-					new InputStreamReader(importFrom.openStream())
+					new InputStreamReader(importFrom.openStream(), StandardCharsets.UTF_8)
 				);
 				String inputLine;
 				while ((inputLine = in.readLine()) != null) {
