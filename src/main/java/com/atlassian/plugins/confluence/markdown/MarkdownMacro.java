@@ -72,7 +72,7 @@ public class MarkdownMacro extends BaseMacro implements Macro {
                 .set(HtmlRenderer.ESCAPE_HTML, true)
                 // for full GFM table compatibility add the following table extension options:
 
-                .set(TablesExtension.COLUMN_SPANS, false)
+                .set(TablesExtension.COLUMN_SPANS, true)
                 .set(TablesExtension.APPEND_MISSING_COLUMNS, true)
                 .set(TablesExtension.DISCARD_EXTRA_COLUMNS, true)
                 .set(TablesExtension.HEADER_SEPARATOR_COLUMN_MATCH, true)
