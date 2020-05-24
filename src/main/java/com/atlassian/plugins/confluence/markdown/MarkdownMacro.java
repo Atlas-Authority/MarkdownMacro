@@ -11,26 +11,30 @@ import com.atlassian.renderer.v2.RenderMode;
 import com.atlassian.renderer.v2.macro.BaseMacro;
 import com.atlassian.renderer.v2.macro.MacroException;
 import com.atlassian.webresource.api.assembler.PageBuilderService;
-import com.vladsch.flexmark.ast.Node;
+import com.vladsch.flexmark.ext.tables.TablesExtension;
+import com.vladsch.flexmark.ext.gfm.strikethrough.StrikethroughSubscriptExtension;
 import com.vladsch.flexmark.ext.anchorlink.AnchorLinkExtension;
 import com.vladsch.flexmark.ext.autolink.AutolinkExtension;
 import com.vladsch.flexmark.ext.definition.DefinitionExtension;
 import com.vladsch.flexmark.ext.footnotes.FootnoteExtension;
-import com.vladsch.flexmark.ext.gfm.strikethrough.StrikethroughSubscriptExtension;
 import com.vladsch.flexmark.ext.gfm.tasklist.TaskListExtension;
 import com.vladsch.flexmark.ext.ins.InsExtension;
-import com.vladsch.flexmark.ext.tables.TablesExtension;
 import com.vladsch.flexmark.ext.wikilink.WikiLinkExtension;
 import com.vladsch.flexmark.ext.youtube.embedded.YouTubeLinkExtension;
 import com.vladsch.flexmark.ext.toc.TocExtension;
+import com.vladsch.flexmark.ext.superscript.SuperscriptExtension;
+import com.vladsch.flexmark.util.ast.Node;
 import com.vladsch.flexmark.html.HtmlRenderer;
 import com.vladsch.flexmark.parser.Parser;
-import com.vladsch.flexmark.superscript.SuperscriptExtension;
-import com.vladsch.flexmark.util.options.MutableDataSet;
+import com.vladsch.flexmark.util.data.MutableDataHolder;
+import com.vladsch.flexmark.util.data.MutableDataSet;
+import com.vladsch.flexmark.util.misc.Extension;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Arrays;
 import java.util.Map;
+import java.util.ArrayList;
+import java.util.List;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.*;
@@ -65,36 +69,34 @@ public class MarkdownMacro extends BaseMacro implements Macro {
 
         pageBuilderService.assembler().resources().requireWebResource("com.atlassian.plugins.confluence.markdown.confluence-markdown-macro:highlightjs");
 
-        MutableDataSet options = new MutableDataSet()
-                .set(HtmlRenderer.GENERATE_HEADER_ID, true)
-                .set(HtmlRenderer.INDENT_SIZE, 2)
-                .set(HtmlRenderer.PERCENT_ENCODE_URLS, true)
-                .set(HtmlRenderer.ESCAPE_HTML, true)
-                // for full GFM table compatibility add the following table extension options:
+	MutableDataSet options = new MutableDataSet()
+		.set(HtmlRenderer.GENERATE_HEADER_ID, true)
+		.set(HtmlRenderer.INDENT_SIZE, 2)
+		.set(HtmlRenderer.PERCENT_ENCODE_URLS, true)
+		.set(HtmlRenderer.ESCAPE_HTML, true)
+	
+		.set(TablesExtension.COLUMN_SPANS, true)
+		.set(TablesExtension.APPEND_MISSING_COLUMNS, true)
+		.set(TablesExtension.DISCARD_EXTRA_COLUMNS, true)
+		.set(TablesExtension.HEADER_SEPARATOR_COLUMN_MATCH, true)	
+		.set(TablesExtension.CLASS_NAME, "confluenceTable");
+	
+	List<Extension> extensions = new ArrayList<>();
+	extensions.add(TablesExtension.create());
+	extensions.add(StrikethroughSubscriptExtension.create());
+	extensions.add(StrikethroughSubscriptExtension.create());
+	extensions.add(InsExtension.create());
+	extensions.add(TaskListExtension.create());
+	extensions.add(FootnoteExtension.create());
+	extensions.add(WikiLinkExtension.create());
+	extensions.add(DefinitionExtension.create());
+	extensions.add(AnchorLinkExtension.create());
+	extensions.add(AutolinkExtension.create());
+	extensions.add(SuperscriptExtension.create());
+	extensions.add(YouTubeLinkExtension.create());
+	extensions.add(TocExtension.create());
 
-                .set(TablesExtension.COLUMN_SPANS, true)
-                .set(TablesExtension.APPEND_MISSING_COLUMNS, true)
-                .set(TablesExtension.DISCARD_EXTRA_COLUMNS, true)
-                .set(TablesExtension.HEADER_SEPARATOR_COLUMN_MATCH, true)
-                .set(TablesExtension.CLASS_NAME, "confluenceTable")
-                .set(Parser.EXTENSIONS, Arrays.asList(TablesExtension.create()));
-
-        options.set(Parser.EXTENSIONS, Arrays.asList(
-                TablesExtension.create(),
-                StrikethroughSubscriptExtension.create(),
-                InsExtension.create(),
-                TaskListExtension.create(),
-                FootnoteExtension.create(),
-                WikiLinkExtension.create(),
-                DefinitionExtension.create(),
-                AnchorLinkExtension.create(),
-                AutolinkExtension.create(),
-                SuperscriptExtension.create(),
-                YouTubeLinkExtension.create(),
-                TocExtension.create()
-
-        ));
-
+	options.set(Parser.EXTENSIONS, extensions);
 
         String highlightjs = "<script>\n" +
                 "AJS.$('[data-macro-name=\"markdown\"] code').each(function(i, block) {\n" +
