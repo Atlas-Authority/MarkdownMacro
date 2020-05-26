@@ -165,9 +165,13 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 					Elements th = body.getElementsByTag("th");
 					Elements td = body.getElementsByTag("td");
 					for (Element thi : th) {
+						String alignment = thi.attributes().get("align");
+						if (alignment != null && !alignment.isEmpty()) thi.attr("style", "text-align: " + alignment + ";");	
 						thi.addClass("confluenceTh");
 					}
 					for (Element tdi : td) {
+						String alignment = tdi.attributes().get("align");
+						if (alignment != null && !alignment.isEmpty()) tdi.attr("style", "text-align: " + alignment + ";");
 						tdi.addClass("confluenceTd");
 					}
 

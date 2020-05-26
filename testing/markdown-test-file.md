@@ -138,7 +138,12 @@ Alignment
 | Header      | Title       | Here's this   |
 | Paragraph   | Text        | And more      |
 
-TOFIX: Table alignment doesn't work
+| Markdown Table | With Extra Features Test|
+| -------- | --------: |
+| [link](https://jsoup.org/apidocs/org/jsoup/nodes/Element.html#attr(java.lang.String,java.lang.String)) | 
+| `code` | ~~strikethrough~~ |
+| *italics* | **emphasis** |
+
 
 ## Links
 
