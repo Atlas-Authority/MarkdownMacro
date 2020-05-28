@@ -124,8 +124,8 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 					"pre > code {display: block !important;}\n" +
 					"</style>";
 
-			class privateRepositoryException extends Exception {
-				public privateRepositoryException(String message) {
+			class PrivateRepositoryException extends Exception {
+				public PrivateRepositoryException(String message) {
 					super(message);
 				}
 			}
@@ -148,6 +148,7 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 				BufferedReader in = new BufferedReader(
 					new InputStreamReader(importFrom.openStream(), StandardCharsets.UTF_8)
 				);
+				
 				String inputLine;
 				while ((inputLine = in.readLine()) != null) {
 					toParse = toParse + "\n" + inputLine;
@@ -155,7 +156,7 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 				in.close();
 				toParse = toParse.trim();
 				if (toParse.startsWith("<html>\n<head>\n  <title>OpenID transaction in progress</title>")) {
-					throw new privateRepositoryException("Cannot import from private repository.");
+					throw new PrivateRepositoryException("Cannot import from private repository.");
 				}else {
 					Node document = parser.parse(toParse);
 					String htmlBody = renderer.render(document);
@@ -175,6 +176,20 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 						tdi.addClass("confluenceTd");
 					}
 
+					Elements links = body.getElementsByTag("a");
+					Elements images = body.getElementsByTag("img");
+					for (Element link : links) {
+						String href = link.attributes().get("href");
+						if (href != null && !href.isEmpty() && href.charAt(0) != '#') {
+							link.attr("href", new URL(importFrom, href).toString());
+						}	
+					}
+					for (Element image : images) {
+						String src = image.attributes().get("src");
+						if (src != null && !src.isEmpty() && src.charAt(0) != '#') {
+							image.attr("src", new URL(importFrom, src).toString());
+						}
+					}
 					html =  body.html() +  highlightjs + highlightjscss;
 
 					return html;
@@ -183,7 +198,7 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 			catch (MalformedURLException u) {
 				exceptionsToReturn = exceptionsToReturn + "<strong>Error with Markdown From URL macro: Invalid URL.</strong><br>Please enter a valid URL. If you are not trying to import markdown from a URL, use the Markdown macro instead of the Markdown from URL macro.<br>For support <a href='https://community.atlassian.com/t5/tag/addon-com.atlassian.plugins.confluence.markdown.confluence-markdown-macro/tg-p'>visit our Q&A in the Atlassian Community</a>. You can ask a new question by clicking the \"Create\" button on the top right of the Q&A.<br>";
 			}
-			catch (privateRepositoryException p) {
+			catch (PrivateRepositoryException p) {
 				exceptionsToReturn = exceptionsToReturn + "<strong>Error with Markdown From URL macro: Importing from private Bitbucket repositories is not supported.</strong><br>Please make your repository public before importing. Alternatively, you can copy and paste your markdown into the Markdown macro.<br>If you are allowed access, you can find the markdown file <a href='" + bodyContent + "'>here</a>.<br>For support <a href='https://community.atlassian.com/t5/tag/addon-com.atlassian.plugins.confluence.markdown.confluence-markdown-macro/tg-p'>visit our Q&A in the Atlassian Community</a>. You can ask a new question by clicking the \"Create\" button on the top right of the Q&A.<br>";
 			}
 			catch (FileNotFoundException f) {
