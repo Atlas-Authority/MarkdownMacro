@@ -38,7 +38,6 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.Map;
 import java.util.ArrayList;
 import java.util.List;
@@ -50,6 +49,9 @@ import java.nio.charset.StandardCharsets;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.*;
 import org.jsoup.select.*;
+
+import org.owasp.html.HtmlPolicyBuilder;
+import org.owasp.html.PolicyFactory;
 
 public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 
@@ -190,7 +192,23 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 							image.attr("src", new URL(importFrom, src).toString());
 						}
 					}
-					html =  body.html() +  highlightjs + highlightjscss;
+					
+			        PolicyFactory policy = new HtmlPolicyBuilder()
+			        		.allowCommonInlineFormattingElements()
+			        		.allowCommonBlockElements()
+			        		.allowStyling()
+			        		.allowStandardUrlProtocols()
+			        		.allowElements("a", "table", "tr", "td", "th", "thead", "tbody", "img", "hr", "input", "code", "pre", "dl", "dt", "dd")
+			        	    .allowAttributes("href").onElements("a")
+					        .allowAttributes("align", "class").onElements("table", "tr", "td", "th", "thead", "tbody")
+			        		.allowAttributes("id").onElements("h1", "h2", "h3", "h4", "h5", "h6", "sup", "li")
+			        	    .allowAttributes("alt", "src").onElements("img")
+			        	    .allowAttributes("class").onElements("li", "code")
+			        	    .allowAttributes("type", "class", "checked", "disabled", "readonly").onElements("input")
+					        .allowTextIn("table")
+			        		.toFactory();
+			        String sanitizedBody = policy.sanitize(body.html());
+			        html =  sanitizedBody +  highlightjs + highlightjscss;
 
 					return html;
 				}
