@@ -1,9 +1,11 @@
 package com.atlassian.plugins.confluence.markdown;
 
+import com.atlassian.bandana.BandanaManager;
 import com.atlassian.confluence.content.render.xhtml.ConversionContext;
 import com.atlassian.confluence.content.render.xhtml.DefaultConversionContext;
 import com.atlassian.confluence.macro.Macro;
 import com.atlassian.confluence.macro.MacroExecutionException;
+import com.atlassian.confluence.setup.bandana.ConfluenceBandanaContext;
 import com.atlassian.confluence.xhtml.api.XhtmlContent;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.renderer.RenderContext;
@@ -11,6 +13,8 @@ import com.atlassian.renderer.v2.RenderMode;
 import com.atlassian.renderer.v2.macro.BaseMacro;
 import com.atlassian.renderer.v2.macro.MacroException;
 import com.atlassian.webresource.api.assembler.PageBuilderService;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -32,15 +36,20 @@ import com.vladsch.flexmark.parser.Parser;
 import com.vladsch.flexmark.util.data.MutableDataSet;
 import com.vladsch.flexmark.util.misc.Extension;
 
+import com.atlassian.plugins.confluence.markdown.configuration.MacroConfigModel;
+import static com.atlassian.plugins.confluence.markdown.configuration.PluginAdminGetConfigurationAction.PLUGIN_CONFIG_KEY;
+
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.HttpURLConnection;
 import java.util.Map;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.LinkedList;
 
 import java.net.InetAddress;
 
@@ -56,15 +65,98 @@ import org.owasp.html.PolicyFactory;
 public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 
     private final XhtmlContent xhtmlUtils;
+    private BandanaManager bandanaManager;
+    private ConfluenceBandanaContext context = new ConfluenceBandanaContext("markdown-plugin");
+    private ObjectMapper objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    private LinkedList<String[]> bwListing;
+    private boolean enabled;
 
     private PageBuilderService pageBuilderService;
+    
+    class PrivateRepositoryException extends Exception {
+		public PrivateRepositoryException(String message) {
+			super(message);
+		}
+	}
+	
+	class NonWhitelistURLException extends Exception {
+		public NonWhitelistURLException() {
+			super();
+		}
+	}
+	
+	class IllegalRedirectException extends Exception {
+		public IllegalRedirectException(String message) {
+			super(message);
+		}
+	}
 
     @Autowired
-    public MarkdownFromURLMacro(@ComponentImport PageBuilderService pageBuilderService, XhtmlContent xhtmlUtils) {
+    public MarkdownFromURLMacro(@ComponentImport PageBuilderService pageBuilderService, XhtmlContent xhtmlUtils, BandanaManager bandanaManager) {
         this.pageBuilderService = pageBuilderService;
         this.xhtmlUtils = xhtmlUtils;
+        this.bandanaManager = bandanaManager;
+    }
+    
+    private void initWhitelistConfiguration() {
+        MacroConfigModel model = new MacroConfigModel();
+        String config = (String) this.bandanaManager.getValue(context, PLUGIN_CONFIG_KEY);
+        if (config != null) {
+            try {
+                model = objectMapper.readValue(config, MacroConfigModel.class);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+        enabled = model.getConfig().getEnabled();
+        bwListing = new LinkedList<String[]>();
+        for (String domain : model.getConfig().getBwList()) {
+        	if (domain.length() == 0) continue;
+        	String[] domainComponents = domain.split("\\.");
+        	bwListing.add(domainComponents);
+        }
+    }
+    
+    private boolean isAllowedToProceed(URL url) {
+        if (!enabled) return true;
+
+        String[] hostComponents = url.getHost().split("\\.");
+        for (String[] whitelistDomainComponents : bwListing) {
+            if (hostComponents.length < whitelistDomainComponents.length) continue;
+            boolean isMatch = true;
+        	for (int i = 0; i < whitelistDomainComponents.length; i++) {
+        		if (!hostComponents[hostComponents.length - i - 1].equalsIgnoreCase(whitelistDomainComponents[whitelistDomainComponents.length - i - 1])) isMatch = false;
+        	}
+        	if (isMatch) return true;
+        }
+        
+        return false;
     }
 
+    private URL getFinalURL(URL url) throws IOException, IllegalRedirectException {
+    	if (!isAllowedToProceed(url)) {
+    		throw new IllegalRedirectException(url.toString());
+    	}
+    	
+    	HttpURLConnection con = (HttpURLConnection) url.openConnection();
+    	con.setInstanceFollowRedirects(false);
+    	con.connect();
+    	con.getInputStream();
+    	
+    	int responseCode = con.getResponseCode();;
+    	if (responseCode >= 300 && responseCode < 400) {
+    		String redirectUrlString = con.getHeaderField("Location");
+    		if (redirectUrlString == null) throw new IllegalRedirectException("NULL");
+			try {
+				URL redirectUrl = new URL(redirectUrlString);
+				return getFinalURL(redirectUrl);
+			} catch (MalformedURLException e) {
+				throw new IllegalRedirectException(redirectUrlString);
+			}
+    	}
+    	
+    	return url;
+    }
 
     @Override
     public BodyType getBodyType() {
@@ -77,7 +169,6 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
     }
 
     @Override
-
     public String execute(Map<String, String> parameters, String bodyContent, ConversionContext conversionContext) throws MacroExecutionException
     {
 
@@ -126,12 +217,6 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 					"pre > code {display: block !important;}\n" +
 					"</style>";
 
-			class PrivateRepositoryException extends Exception {
-				public PrivateRepositoryException(String message) {
-					super(message);
-				}
-			}
-
 			Parser parser = Parser.builder(options).build();
 			HtmlRenderer renderer = HtmlRenderer.builder(options).build();
 			
@@ -139,14 +224,23 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 			String html = "";
 			String toParse = "";
 			try {
-
+				initWhitelistConfiguration();
+				
 				URL importFrom = new URL(bodyContent);
-				if(!importFrom.getProtocol().startsWith("http"))
+				if (!isAllowedToProceed(importFrom)) {
+					throw new NonWhitelistURLException();
+				}
+				importFrom = getFinalURL(importFrom);
+				
+				if(!importFrom.getProtocol().startsWith("http")) {
 					throw new MalformedURLException();
+				}
+				
 				InetAddress inetAddress = InetAddress.getByName(importFrom.getHost());
-				if(inetAddress.isAnyLocalAddress() || inetAddress.isLoopbackAddress() || inetAddress.isLinkLocalAddress())
+				if(inetAddress.isAnyLocalAddress() || inetAddress.isLoopbackAddress() || inetAddress.isLinkLocalAddress()) {
 					throw new MalformedURLException();
-
+				}
+					
 				BufferedReader in = new BufferedReader(
 					new InputStreamReader(importFrom.openStream(), StandardCharsets.UTF_8)
 				);
@@ -159,7 +253,7 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 				toParse = toParse.trim();
 				if (toParse.startsWith("<html>\n<head>\n  <title>OpenID transaction in progress</title>")) {
 					throw new PrivateRepositoryException("Cannot import from private repository.");
-				}else {
+				} else {
 					Node document = parser.parse(toParse);
 					String htmlBody = renderer.render(document);
 
@@ -214,7 +308,7 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 				}
 			}
 			catch (MalformedURLException u) {
-				exceptionsToReturn = exceptionsToReturn + "<strong>Error with Markdown From URL macro: Invalid URL.</strong><br>Please enter a valid URL. If you are not trying to import markdown from a URL, use the Markdown macro instead of the Markdown from URL macro.<br>For support <a href='https://community.atlassian.com/t5/tag/addon-com.atlassian.plugins.confluence.markdown.confluence-markdown-macro/tg-p'>visit our Q&A in the Atlassian Community</a>. You can ask a new question by clicking the \"Create\" button on the top right of the Q&A.<br>";
+				exceptionsToReturn += "<strong>Error with Markdown From URL macro: Invalid URL.</strong><br>Please enter a valid URL. If you are not trying to import markdown from a URL, use the Markdown macro instead of the Markdown from URL macro.<br>For support <a href='https://community.atlassian.com/t5/tag/addon-com.atlassian.plugins.confluence.markdown.confluence-markdown-macro/tg-p'>visit our Q&A in the Atlassian Community</a>. You can ask a new question by clicking the \"Create\" button on the top right of the Q&A.<br>";
 			}
 			catch (PrivateRepositoryException p) {
 				exceptionsToReturn = exceptionsToReturn + "<strong>Error with Markdown From URL macro: Importing from private Bitbucket repositories is not supported.</strong><br>Please make your repository public before importing. Alternatively, you can copy and paste your markdown into the Markdown macro.<br>If you are allowed access, you can find the markdown file <a href='" + bodyContent + "'>here</a>.<br>For support <a href='https://community.atlassian.com/t5/tag/addon-com.atlassian.plugins.confluence.markdown.confluence-markdown-macro/tg-p'>visit our Q&A in the Atlassian Community</a>. You can ask a new question by clicking the \"Create\" button on the top right of the Q&A.<br>";
@@ -224,6 +318,15 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 			}
 			catch (IOException e) {
 				exceptionsToReturn = exceptionsToReturn + "<strong>Error with Markdown From URL macro: Unexpected error.</strong><br>" + e.toString() + "<br>For support <a href='https://community.atlassian.com/t5/tag/addon-com.atlassian.plugins.confluence.markdown.confluence-markdown-macro/tg-p'>visit our Q&A in the Atlassian Community</a>. You can ask a new question by clicking the \"Create\" button on the top right of the Q&A.<br>"; 
+			}
+			catch (NonWhitelistURLException n) {
+				exceptionsToReturn = exceptionsToReturn + "<strong>Error with Markdown From URL macro: URL has not been whitelisted by administrators.</strong>";
+			}
+			catch (IllegalRedirectException r) {
+				if (r.getMessage() != null && r.getMessage().length() > 0) {
+					if (r.getMessage() == null) exceptionsToReturn = exceptionsToReturn + "<strong>Error with Markdown From URL macro: null redirect URL</string>";
+					else exceptionsToReturn = exceptionsToReturn + "<strong>Error with Markdown From URL macro: The following redirect URL has not been whitelisted by administrators: " + r.getMessage() + ".</strong>";
+				} else exceptionsToReturn = exceptionsToReturn + "<strong>Error with Markdown From URL macro: Malformed redirect URL.</strong>";
 			}
 			finally {
 				if (exceptionsToReturn != "") {
