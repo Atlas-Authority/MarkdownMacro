@@ -4,6 +4,7 @@ import com.atlassian.bandana.BandanaManager;
 import com.atlassian.confluence.core.ConfluenceActionSupport;
 import com.atlassian.confluence.setup.bandana.ConfluenceBandanaContext;
 import com.atlassian.plugin.spring.scanner.annotation.component.Scanned;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @Scanned
@@ -12,7 +13,7 @@ public class PluginAdminSaveConfigurationAction extends ConfluenceActionSupport 
 
     private BandanaManager bandanaManager;
     private ConfluenceBandanaContext context = new ConfluenceBandanaContext("markdown-plugin");
-    private ObjectMapper objectMapper = new ObjectMapper();
+    private ObjectMapper objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
     private MacroConfigModel model;
 

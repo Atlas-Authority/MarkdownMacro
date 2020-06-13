@@ -30,7 +30,6 @@
 
 <form action="set.action" method="POST" class="aui" id="markdown-form">
     <div id="markdown-options">
-    
         <p style="padding: 10px 0;">Enable URL Whitelist feature. If not enabled, all domains will be allowed.</p>
         
         <div class="flex-box">
@@ -56,7 +55,7 @@
             </p>
         </div>
         <div class="field-group">
-            <label for="list-list">Added domainss</label>
+            <label for="list-list">Added domains</label>
             <select multiple id="list-list" class="ak-field-select ak-field__width-medium" size="10" disabled></select>
             <div>
                 <button class="ak-button ak-button__appearance-default" type="button" id="remove-list" disabled>Remove</button>

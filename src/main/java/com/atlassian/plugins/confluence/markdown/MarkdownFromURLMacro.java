@@ -68,7 +68,7 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
     private BandanaManager bandanaManager;
     private ConfluenceBandanaContext context = new ConfluenceBandanaContext("markdown-plugin");
     private ObjectMapper objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-    private LinkedList<String[]> bwListing;
+    private LinkedList<String[]> whitelist;
     private boolean enabled;
 
     private PageBuilderService pageBuilderService;
@@ -86,8 +86,15 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 	}
 	
 	class IllegalRedirectException extends Exception {
-		public IllegalRedirectException(String message) {
+		boolean isMalformed;
+		
+		public IllegalRedirectException() {
+			super();
+		}
+		
+		public IllegalRedirectException(boolean isMalformed, String message) {
 			super(message);
+			this.isMalformed = isMalformed;
 		}
 	}
 
@@ -109,11 +116,11 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
             }
         }
         enabled = model.getConfig().getEnabled();
-        bwListing = new LinkedList<String[]>();
-        for (String domain : model.getConfig().getBwList()) {
+        whitelist = new LinkedList<String[]>();
+        for (String domain : model.getConfig().getWhitelist()) {
         	if (domain.length() == 0) continue;
         	String[] domainComponents = domain.split("\\.");
-        	bwListing.add(domainComponents);
+        	whitelist.add(domainComponents);
         }
     }
     
@@ -121,7 +128,7 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
         if (!enabled) return true;
 
         String[] hostComponents = url.getHost().split("\\.");
-        for (String[] whitelistDomainComponents : bwListing) {
+        for (String[] whitelistDomainComponents : whitelist) {
             if (hostComponents.length < whitelistDomainComponents.length) continue;
             boolean isMatch = true;
         	for (int i = 0; i < whitelistDomainComponents.length; i++) {
@@ -134,24 +141,23 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
     }
 
     private URL getFinalURL(URL url) throws IOException, IllegalRedirectException {
-    	if (!isAllowedToProceed(url)) {
-    		throw new IllegalRedirectException(url.toString());
-    	}
-    	
     	HttpURLConnection con = (HttpURLConnection) url.openConnection();
     	con.setInstanceFollowRedirects(false);
     	con.connect();
     	con.getInputStream();
     	
-    	int responseCode = con.getResponseCode();;
+    	int responseCode = con.getResponseCode();
     	if (responseCode >= 300 && responseCode < 400) {
     		String redirectUrlString = con.getHeaderField("Location");
-    		if (redirectUrlString == null) throw new IllegalRedirectException("NULL");
+    		if (redirectUrlString == null) throw new IllegalRedirectException();
 			try {
 				URL redirectUrl = new URL(redirectUrlString);
+				if (!isAllowedToProceed(redirectUrl)) {
+	        		throw new IllegalRedirectException(false, redirectUrlString);
+	        	}
 				return getFinalURL(redirectUrl);
 			} catch (MalformedURLException e) {
-				throw new IllegalRedirectException(redirectUrlString);
+				throw new IllegalRedirectException(true, redirectUrlString);
 			}
     	}
     	
@@ -308,29 +314,52 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 				}
 			}
 			catch (MalformedURLException u) {
-				exceptionsToReturn += "<strong>Error with Markdown From URL macro: Invalid URL.</strong><br>Please enter a valid URL. If you are not trying to import markdown from a URL, use the Markdown macro instead of the Markdown from URL macro.<br>For support <a href='https://community.atlassian.com/t5/tag/addon-com.atlassian.plugins.confluence.markdown.confluence-markdown-macro/tg-p'>visit our Q&A in the Atlassian Community</a>. You can ask a new question by clicking the \"Create\" button on the top right of the Q&A.<br>";
+				exceptionsToReturn += "<strong>Error with Markdown From URL macro: Invalid URL.</strong><br>Please enter a valid URL."
+						+ " If you are not trying to import markdown from a URL, use the Markdown macro instead of the Markdown from "
+						+ "URL macro.<br>For support <a href='https://community.atlassian.com/t5/tag/addon-com.atlassian.plugins."
+						+ "confluence.markdown.confluence-markdown-macro/tg-p'>visit our Q&A in the Atlassian Community</a>. You can "
+						+ "ask a new question by clicking the \"Create\" button on the top right of the Q&A.<br>";
 			}
 			catch (PrivateRepositoryException p) {
-				exceptionsToReturn = exceptionsToReturn + "<strong>Error with Markdown From URL macro: Importing from private Bitbucket repositories is not supported.</strong><br>Please make your repository public before importing. Alternatively, you can copy and paste your markdown into the Markdown macro.<br>If you are allowed access, you can find the markdown file <a href='" + bodyContent + "'>here</a>.<br>For support <a href='https://community.atlassian.com/t5/tag/addon-com.atlassian.plugins.confluence.markdown.confluence-markdown-macro/tg-p'>visit our Q&A in the Atlassian Community</a>. You can ask a new question by clicking the \"Create\" button on the top right of the Q&A.<br>";
+				exceptionsToReturn = exceptionsToReturn + "<strong>Error with Markdown From URL macro: Importing from private Bitbucket "
+						+ "repositories is not supported.</strong><br>Please make your repository public before importing. Alternatively, "
+						+ "you can copy and paste your markdown into the Markdown macro.<br>If you are allowed access, you can find the "
+						+ "markdown file <a href='" + bodyContent + "'>here</a>.<br>For support <a href='https://community.atlassian.com/"
+						+ "t5/tag/addon-com.atlassian.plugins.confluence.markdown.confluence-markdown-macro/tg-p'>visit our Q&A in"
+						+ " the Atlassian Community</a>. You can ask a new question by clicking the \"Create\" button on the top "
+						+ "right of the Q&A.<br>";
 			}
 			catch (FileNotFoundException f) {
-				exceptionsToReturn = exceptionsToReturn + "<strong>Error with Markdown From URL macro: URL does not exist.</strong><br>" + bodyContent + "<br>Please double check your URL. Perhaps you made a typo or perhaps the page has been moved.<br>This can also be caused by changing the Github repository containing the file from public to private. If this is the case go back to the raw file and re-copy the link.<br>For support <a href='https://community.atlassian.com/t5/tag/addon-com.atlassian.plugins.confluence.markdown.confluence-markdown-macro/tg-p'>visit our Q&A in the Atlassian Community</a>. You can ask a new question by clicking the \"Create\" button on the top right of the Q&A.<br>";
+				exceptionsToReturn = exceptionsToReturn + "<strong>Error with Markdown From URL macro: URL does not exist.</strong><br>"
+						+ bodyContent + "<br>Please double check your URL. Perhaps you made a typo or perhaps the page has been moved.<br>"
+						+ "This can also be caused by changing the Github repository containing the file from public to private. If this is "
+						+ "the case go back to the raw file and re-copy the link.<br>For support <a href='https://community.atlassian.com/t5"
+						+ "/tag/addon-com.atlassian.plugins.confluence.markdown.confluence-markdown-macro/tg-p'>visit our Q&A in the Atlassian "
+						+ "Community</a>. You can ask a new question by clicking the \"Create\" button on the top right of the Q&A.<br>";
 			}
 			catch (IOException e) {
-				exceptionsToReturn = exceptionsToReturn + "<strong>Error with Markdown From URL macro: Unexpected error.</strong><br>" + e.toString() + "<br>For support <a href='https://community.atlassian.com/t5/tag/addon-com.atlassian.plugins.confluence.markdown.confluence-markdown-macro/tg-p'>visit our Q&A in the Atlassian Community</a>. You can ask a new question by clicking the \"Create\" button on the top right of the Q&A.<br>"; 
+				exceptionsToReturn = exceptionsToReturn + "<strong>Error with Markdown From URL macro: Unexpected error.</strong><br>" 
+						+ e.toString() + "<br>For support <a href='https://community.atlassian.com/t5/tag/addon-com.atlassian.plugins."
+						+ "confluence.markdown.confluence-markdown-macro/tg-p'>visit our Q&A in the Atlassian Community</a>. You can ask"
+						+ " a new question by clicking the \"Create\" button on the top right of the Q&A.<br>"; 
 			}
 			catch (NonWhitelistURLException n) {
-				exceptionsToReturn = exceptionsToReturn + "<strong>Error with Markdown From URL macro: URL has not been whitelisted by administrators.</strong>";
+				exceptionsToReturn = exceptionsToReturn + "<strong>Error with Markdown From URL macro: </strong>URL has not been whitelisted by "
+						+ "administrators.<br>";
 			}
 			catch (IllegalRedirectException r) {
-				if (r.getMessage() != null && r.getMessage().length() > 0) {
-					if (r.getMessage() == null) exceptionsToReturn = exceptionsToReturn + "<strong>Error with Markdown From URL macro: null redirect URL</string>";
-					else exceptionsToReturn = exceptionsToReturn + "<strong>Error with Markdown From URL macro: The following redirect URL has not been whitelisted by administrators: " + r.getMessage() + ".</strong>";
-				} else exceptionsToReturn = exceptionsToReturn + "<strong>Error with Markdown From URL macro: Malformed redirect URL.</strong>";
+				if (r.getMessage() != null) {
+					if (r.isMalformed) exceptionsToReturn = exceptionsToReturn + "<strong>Error with Markdown From URL macro: </strong>Malformed"
+							+ " redirect URL: " + r.getMessage() + ".<br>";
+					else exceptionsToReturn = exceptionsToReturn + "<strong>Error with Markdown From URL macro: </strong>The following redirect"
+							+ " URL has not been whitelisted by administrators: " + r.getMessage() + ".<br>";
+				} else {
+					exceptionsToReturn = exceptionsToReturn + "<strong>Error with Markdown From URL macro: </strong>NULL redirect.<br>";
+				}
 			}
 			finally {
 				if (exceptionsToReturn != "") {
-					html = "<p style='background: #ffe0e0; border-radius: 5px; padding: 10px;'>" + exceptionsToReturn + "</p>";
+					html = "<div class=\"aui-message aui-message-error\"><p class=\"title\"><strong>Error</strong></p><p>" + exceptionsToReturn + "</p></div>";
 				}
 				return html;
 			}

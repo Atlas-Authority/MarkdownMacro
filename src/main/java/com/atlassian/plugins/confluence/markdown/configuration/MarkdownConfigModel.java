@@ -4,15 +4,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MarkdownConfigModel {
-    private List<String> bwList = new ArrayList<String>();
+    private List<String> whitelist = new ArrayList<String>();
     private boolean enabled = false;
 
-    public List<String> getBwList() {
-        return bwList;
+    public List<String> getWhitelist() {
+        return whitelist;
     }
 
-    public MarkdownConfigModel setBwList(List<String> bwList) {
-        this.bwList = bwList;
+    public MarkdownConfigModel setWhitelist(List<String> whitelist) {
+        this.whitelist = whitelist;
         return this;
     }
     

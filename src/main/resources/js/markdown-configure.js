@@ -16,10 +16,10 @@ AJS.toInit(function ($) {
 		$("#remove-list").attr("disabled", true);
 	}
 
-    for (var i = 0; i < json.config.bwList.length; i++) {
+    for (var i = 0; i < json.config.whitelist.length; i++) {
         var option = document.createElement("option");
-        option.value = json.config.bwList[i];
-        option.innerText = json.config.bwList[i];
+        option.value = json.config.whitelist[i];
+        option.innerText = json.config.whitelist[i];
         document.getElementById("list-list").appendChild(option);
     }
 
@@ -40,7 +40,7 @@ AJS.toInit(function ($) {
     $("#submit-button").click(function () {
         var json = {
             "config": {
-                "bwList": getIPPatterns("list-list"),
+                "whitelist": getIPPatterns("list-list"),
 				"enabled": document.getElementById("whitelist-enabled").checked
             }
         };
@@ -50,10 +50,10 @@ AJS.toInit(function ($) {
     });
 
     /**
-     * Add to blacklist/whitelist button handler
+     * Add to whitelist button handler
      */
     $("#add-list").click(function () {
-	addListClickHandler();
+		addListClickHandler();
     });
 
     // Add enter event listener for whitelist
@@ -76,9 +76,9 @@ AJS.toInit(function ($) {
 function removeSelectedOptions(list) {
     var options = list.options;
     for (var i = options.length - 1; i >= 0; i--) {
-	if (options[i].selected) {
-	    list.remove(i);
-	}
+		if (options[i].selected) {
+			list.remove(i);
+		}
     }
 }
 
@@ -94,10 +94,10 @@ function getIPPatterns(id) {
 function addListClickHandler() {
     var value = $("#list-input").val();
     if (value.trim() !== "") {
-	var option = document.createElement("option");
-	option.value = value;
-	option.innerText = value;
-	document.getElementById("list-list").appendChild(option);
+		var option = document.createElement("option");
+		option.value = value;
+		option.innerText = value;
+		document.getElementById("list-list").appendChild(option);
     }
     $("#list-input").val("");
 }
