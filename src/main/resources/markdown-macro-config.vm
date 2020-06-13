@@ -30,6 +30,10 @@
 
 <form action="set.action" method="POST" class="aui" id="markdown-form">
     <div id="markdown-options">
+	    <div class="aui-message aui-message-confirmation" id="save-success-popup">
+	        <p>Changes saved successfully.</p>
+	    </div>
+        
         <p style="padding: 10px 0;">Enable URL Whitelist feature. If not enabled, all domains will be allowed.</p>
         
         <div class="flex-box">

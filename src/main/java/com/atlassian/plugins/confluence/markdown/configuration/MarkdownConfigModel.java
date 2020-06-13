@@ -24,5 +24,15 @@ public class MarkdownConfigModel {
     	this.enabled = enabled;
     	return this;
     }
-
+    
+    @Override
+    public boolean equals(Object o) {
+    	if (o == this) return true;
+    	if (!(o instanceof MarkdownConfigModel)) return false;
+    	
+    	if (((MarkdownConfigModel) o).getEnabled() != this.enabled) return false;
+    	if (!((MarkdownConfigModel) o).getWhitelist().equals(this.whitelist)) return false;
+    	
+    	return true;
+    }
 }
