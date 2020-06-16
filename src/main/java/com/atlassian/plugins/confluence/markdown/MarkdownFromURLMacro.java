@@ -38,6 +38,7 @@ import com.vladsch.flexmark.util.misc.Extension;
 
 import com.atlassian.plugins.confluence.markdown.configuration.MacroConfigModel;
 import static com.atlassian.plugins.confluence.markdown.configuration.PluginAdminGetConfigurationAction.PLUGIN_CONFIG_KEY;
+import com.atlassian.plugins.confluence.markdown.utils.IPAddressUtil;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
@@ -45,13 +46,12 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.net.UnknownHostException;
 import java.net.HttpURLConnection;
+import java.net.InetAddress;
 import java.util.Map;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.LinkedList;
-
-import java.net.InetAddress;
 
 import java.nio.charset.StandardCharsets;
 
@@ -68,7 +68,8 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
     private BandanaManager bandanaManager;
     private ConfluenceBandanaContext context = new ConfluenceBandanaContext("markdown-plugin");
     private ObjectMapper objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
-    private LinkedList<String[]> whitelist;
+    private List<String[]> whitelistDomains;
+    private List<InetAddress> whitelistIPs;
     private boolean enabled;
 
     private PageBuilderService pageBuilderService;
@@ -105,7 +106,7 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
         this.bandanaManager = bandanaManager;
     }
     
-    private void initWhitelistConfiguration() {
+    private void initWhitelistConfiguration() throws UnknownHostException {
         MacroConfigModel model = new MacroConfigModel();
         String config = (String) this.bandanaManager.getValue(context, PLUGIN_CONFIG_KEY);
         if (config != null) {
@@ -116,25 +117,42 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
             }
         }
         enabled = model.getConfig().getEnabled();
-        whitelist = new LinkedList<String[]>();
+        whitelistDomains = new ArrayList<String[]>();
+        whitelistIPs = new ArrayList<InetAddress>();
         for (String domain : model.getConfig().getWhitelist()) {
         	if (domain.length() == 0) continue;
-        	String[] domainComponents = domain.split("\\.");
-        	whitelist.add(domainComponents);
+        	
+        	if (isIPLiteral(domain)) {
+        		whitelistIPs.add(InetAddress.getByName(domain));
+        	} else {
+	        	String[] domainComponents = domain.split("\\.");
+	        	whitelistDomains.add(domainComponents);
+        	}
         }
     }
     
-    private boolean isAllowedToProceed(URL url) {
+    private boolean isIPLiteral(String domain) {
+    	return (IPAddressUtil.textToNumericFormatV4(domain) != null) || (IPAddressUtil.textToNumericFormatV6(domain) != null);
+    }
+    
+    private boolean isAllowedToProceed(URL url) throws UnknownHostException {
         if (!enabled) return true;
-
-        String[] hostComponents = url.getHost().split("\\.");
-        for (String[] whitelistDomainComponents : whitelist) {
+        
+        String host = url.getHost();
+        
+        String[] hostComponents = host.split("\\.");
+        for (String[] whitelistDomainComponents : whitelistDomains) {
             if (hostComponents.length < whitelistDomainComponents.length) continue;
             boolean isMatch = true;
         	for (int i = 0; i < whitelistDomainComponents.length; i++) {
         		if (!hostComponents[hostComponents.length - i - 1].equalsIgnoreCase(whitelistDomainComponents[whitelistDomainComponents.length - i - 1])) isMatch = false;
         	}
         	if (isMatch) return true;
+        }
+        
+        InetAddress inetAddr = InetAddress.getByName(host);
+        for (InetAddress whitelistIP : whitelistIPs) {
+        	if (inetAddr.equals(whitelistIP)) return true;
         }
         
         return false;
@@ -151,7 +169,7 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
     		String redirectUrlString = con.getHeaderField("Location");
     		if (redirectUrlString == null) throw new IllegalRedirectException();
 			try {
-				URL redirectUrl = new URL(redirectUrlString);
+				URL redirectUrl = new URL(url, redirectUrlString);
 				if (!isAllowedToProceed(redirectUrl)) {
 	        		throw new IllegalRedirectException(false, redirectUrlString);
 	        	}
@@ -233,18 +251,21 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 				initWhitelistConfiguration();
 				
 				URL importFrom = new URL(bodyContent);
-				if (!isAllowedToProceed(importFrom)) {
-					throw new NonWhitelistURLException();
-				}
-				importFrom = getFinalURL(importFrom);
 				
 				if(!importFrom.getProtocol().startsWith("http")) {
 					throw new MalformedURLException();
 				}
 				
-				InetAddress inetAddress = InetAddress.getByName(importFrom.getHost());
-				if(inetAddress.isAnyLocalAddress() || inetAddress.isLoopbackAddress() || inetAddress.isLinkLocalAddress()) {
-					throw new MalformedURLException();
+				if (enabled) {	
+					if (!isAllowedToProceed(importFrom)) {
+						throw new NonWhitelistURLException();
+					}
+					importFrom = getFinalURL(importFrom);
+				} else {
+					InetAddress inetAddress = InetAddress.getByName(importFrom.getHost());
+					if(inetAddress.isAnyLocalAddress() || inetAddress.isLoopbackAddress() || inetAddress.isLinkLocalAddress()) {
+						throw new MalformedURLException();
+					}
 				}
 					
 				BufferedReader in = new BufferedReader(

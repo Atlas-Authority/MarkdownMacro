@@ -3,13 +3,8 @@
     <title>Markdown Macro Configuration</title>
     <meta name="decorator" content="atl.admin">
     $webResourceManager.requireResource("com.atlassian.auiplugin:ajs")
-    $webResourceManager.requireResource("com.atlassian.auiplugin:aui-toggle")
     $webResourceManager.requireResource("com.atlassian.auiplugin:aui-forms")
     #requireResourcesForContext("markdown-configure-resources")
-
-    <link rel="stylesheet" href="//unpkg.com/@atlaskit/css-reset@latest" />
-    <link rel="stylesheet" href="//unpkg.com/@atlaskit/reduced-ui-pack@latest" />
-
 
     <style type="text/css">
         .flex-box {
@@ -25,51 +20,57 @@
             margin-bottom: 20px;
         }
     </style>
+    
 </head>
 <body>
 
 <form action="set.action" method="POST" class="aui" id="markdown-form">
     <div id="markdown-options">
-	    <div class="aui-message aui-message-confirmation" id="save-success-popup">
+	    <div class="aui-message aui-message-confirmation" id="save-success-popup" style="display: none;">
 	        <p>Changes saved successfully.</p>
 	    </div>
         
         <p style="padding: 10px 0;">Enable URL Whitelist feature. If not enabled, all domains will be allowed.</p>
         
         <div class="flex-box">
-            <div class="ak-field-checkbox chb-section">
+            <div class="checkbox">
                 <input type="checkbox" id="whitelist-enabled" class="checkbox" name="whitelist-enabled">
                 <label for="whitelist-enabled">Enable Whitelist for Markdown From Url Macro</label>
             </div>
         </div>
 
-        <p style="padding: 10px 0;">Whitelist domains that can be used inside the Markdown From Url Macro.</p>
+        <p style="padding: 10px 0;">Whitelist domains and IP addresses that can be used inside the Markdown From Url Macro.</p>
         
         <div class="field-group">
-            <label for="text-input">Domain name<span class="aui-icon icon-required">required</span></label>
-            <input class="ak-field-text ak-field__width-medium" type="text" id="list-input" name="text-input" title="Text input" placeholder="https://atlasauthority.com" disabled>
-            <div class="description">Domain name</div>
-            <button class="ak-button ak-button__appearance-default" type="button" id="add-list" disabled>Add</button>
+            <label for="list-input">Domain name/IP address<span class="aui-icon icon-required">required</span></label>
+            <input class="text" type="text" id="list-input" name="list-input" title="Text input" placeholder="https://atlasauthority.com" disabled>
+            <div class="description">Domain name/IP address</div>
+            <input class="button submit" type="button" id="add-list" value="Add" disabled>
             <p style="padding: 10px 0;">
-            	Domains are added to Whitelist based on their Fully-Qualified Domain Name (FQDN), using the convention subdomain.example.org. Domains can be whitelisted 
-            	at every level of the hierarchy:</br>
+            	Entries can be added to the Whitelist based on their Fully-Qualified Domain Name (FQDN) using the convention subdomain.example.org, or by their IP address. 
+        	</p>
+        	<p style="padding: 10px 0;">
+            	Domains can be whitelisted at every level of the hierarchy:</br>
             	<li>subdomain.example.org - Would allow a particular subdomain.</li>
 				<li>example.org - Would allow an entire domain name.</li>
 				<li>org - Would allow all .org Top-Level Domains (TLDs)</li>
             </p>
+            <p style="padding: 10px 0;">
+            	IP addresses must be an exact match. IPv4 and IPv6 addresses are acceptable.
+        	</p>
         </div>
         <div class="field-group">
-            <label for="list-list">Added domains</label>
-            <select multiple id="list-list" class="ak-field-select ak-field__width-medium" size="10" disabled></select>
+            <label for="list-list">Added domains/IP addresses</label>
+            <select multiple id="list-list" class="multi-select" size="10" disabled></select>
             <div>
-                <button class="ak-button ak-button__appearance-default" type="button" id="remove-list" disabled>Remove</button>
+                <input class="button submit" type="button" id="remove-list" value="Remove"disabled>
             </div>
         </div>
 
     </div>
 
     <div style="padding-top: 20px;">
-        <button class="ak-button ak-button__appearance-primary" type="submit" id="submit-button">Save</button>
+        <input class="button submit" type="submit" id="submit-button" value="Save">
     </div>
 
     <input type="hidden" id="data" name="data" value="${data}">

@@ -12,7 +12,7 @@
     
     <groupId>com.atlassian.plugins.confluence.markdown</groupId>
     <artifactId>confluence-markdown-macro</artifactId>
-    <version>1.5.8</version>
+    <version>1.6.0</version>
     
     <organization>
         <name>Atlas Authority</name>
@@ -49,37 +49,37 @@
         <dependency>
             <groupId>com.vladsch.flexmark</groupId>
             <artifactId>flexmark-all</artifactId>
-            <version>0.61.30</version>
+            <version>0.61.32</version>
         </dependency>
         
         <dependency>
             <groupId>com.vladsch.flexmark</groupId>
             <artifactId>flexmark-ext-anchorlink</artifactId>
-            <version>0.61.30</version>
+            <version>0.61.32</version>
         </dependency>
         
         <dependency>
             <groupId>com.vladsch.flexmark</groupId>
             <artifactId>flexmark-ext-autolink</artifactId>
-            <version>0.61.30</version>
+            <version>0.61.32</version>
         </dependency>
         
         <dependency>
             <groupId>com.vladsch.flexmark</groupId>
             <artifactId>flexmark-ext-superscript</artifactId>
-            <version>0.61.30</version>
+            <version>0.61.32</version>
         </dependency>
         
         <dependency>
             <groupId>com.vladsch.flexmark</groupId>
             <artifactId>flexmark-ext-youtube-embedded</artifactId>
-            <version>0.61.30</version>
+            <version>0.61.32</version>
         </dependency>
         
         <dependency>
             <groupId>com.vladsch.flexmark</groupId>
             <artifactId>flexmark-ext-toc</artifactId>
-            <version>0.61.30</version>
+            <version>0.61.32</version>
         </dependency>
         
         <dependency>
@@ -100,13 +100,6 @@
             <artifactId>atlassian-spring-scanner-annotation</artifactId>
             <version>${atlassian.spring.scanner.version}</version>
             <scope>provided</scope>
-        </dependency>
-        
-        <dependency>
-        	<groupId>com.atlassian.plugin</groupId>
-        	<artifactId>atlassian-spring-scanner-runtime</artifactId>
-            <version>${atlassian.spring.scanner.version}</version>
-            <scope>runtime</scope>
         </dependency>
         
         <dependency>
@@ -185,7 +178,7 @@
         <confluence.data.version>6.9.0</confluence.data.version>
         <amps.version>8.0.0</amps.version>
         <plugin.testrunner.version>1.1</plugin.testrunner.version>
-        <atlassian.spring.scanner.version>1.2.13</atlassian.spring.scanner.version>
+        <atlassian.spring.scanner.version>2.1.7</atlassian.spring.scanner.version>
     </properties>
     <scm>
         <connection>scm:git:git@bitbucket.org:atlasauthority/markdown-macro-for-confluence.git</connection>
