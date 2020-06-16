@@ -103,13 +103,6 @@
         </dependency>
         
         <dependency>
-        	<groupId>com.atlassian.plugin</groupId>
-        	<artifactId>atlassian-spring-scanner-runtime</artifactId>
-            <version>${atlassian.spring.scanner.version}</version>
-            <scope>runtime</scope>
-        </dependency>
-        
-        <dependency>
         	<groupId>javax.inject</groupId>
         	<artifactId>javax.inject</artifactId>
         	<version>1</version>
@@ -185,7 +178,7 @@
         <confluence.data.version>6.9.0</confluence.data.version>
         <amps.version>8.0.0</amps.version>
         <plugin.testrunner.version>1.1</plugin.testrunner.version>
-        <atlassian.spring.scanner.version>1.2.13</atlassian.spring.scanner.version>
+        <atlassian.spring.scanner.version>2.1.7</atlassian.spring.scanner.version>
     </properties>
     <scm>
         <connection>scm:git:git@bitbucket.org:atlasauthority/markdown-macro-for-confluence.git</connection>
