@@ -1,35 +1,132 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    
     <modelVersion>4.0.0</modelVersion>
+    
     <parent>
         <groupId>com.atlassian.pom</groupId>
         <artifactId>atlassian-public-pom</artifactId>
         <version>25</version>
     </parent>
+    
     <groupId>com.atlassian.plugins.confluence.markdown</groupId>
     <artifactId>confluence-markdown-macro</artifactId>
-    <version>1.5.8</version>
+    <version>1.6.0</version>
+    
     <organization>
         <name>Atlas Authority</name>
         <url>https://atlasauthority.com</url>
     </organization>
+    
     <name>Markdown Macro for Confluence</name>
     <description>This plugin provides macros to render markdown for Confluence.</description>
     <packaging>atlassian-plugin</packaging>
+    
     <dependencies>
+        
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.10</version>
             <scope>test</scope>
         </dependency>
+        
+        <dependency>
+		  <groupId>com.atlassian.sal</groupId>
+		  <artifactId>sal-api</artifactId>
+		  <version>4.4.0</version>
+		  <scope>provided</scope>
+		</dependency>
+        
         <dependency>
             <groupId>com.atlassian.confluence</groupId>
             <artifactId>confluence</artifactId>
             <version>${confluence.version}</version>
             <scope>provided</scope>
         </dependency>
+        
+        <dependency>
+            <groupId>com.vladsch.flexmark</groupId>
+            <artifactId>flexmark-all</artifactId>
+            <version>0.61.32</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>com.vladsch.flexmark</groupId>
+            <artifactId>flexmark-ext-anchorlink</artifactId>
+            <version>0.61.32</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>com.vladsch.flexmark</groupId>
+            <artifactId>flexmark-ext-autolink</artifactId>
+            <version>0.61.32</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>com.vladsch.flexmark</groupId>
+            <artifactId>flexmark-ext-superscript</artifactId>
+            <version>0.61.32</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>com.vladsch.flexmark</groupId>
+            <artifactId>flexmark-ext-youtube-embedded</artifactId>
+            <version>0.61.32</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>com.vladsch.flexmark</groupId>
+            <artifactId>flexmark-ext-toc</artifactId>
+            <version>0.61.32</version>
+        </dependency>
+        
+        <dependency>
+            <!-- jsoup HTML parser library @ https://jsoup.org/ -->
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>1.13.1</version>
+        </dependency>
+        
+        <dependency>
+		    <groupId>com.googlecode.owasp-java-html-sanitizer</groupId>
+		    <artifactId>owasp-java-html-sanitizer</artifactId>
+		    <version>20191001.1</version>
+		</dependency>
+		
+        <dependency>
+            <groupId>com.atlassian.plugin</groupId>
+            <artifactId>atlassian-spring-scanner-annotation</artifactId>
+            <version>${atlassian.spring.scanner.version}</version>
+            <scope>provided</scope>
+        </dependency>
+        
+        <dependency>
+        	<groupId>javax.inject</groupId>
+        	<artifactId>javax.inject</artifactId>
+        	<version>1</version>
+        	<scope>provided</scope>
+        </dependency>
+        
+         <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
+            <version>2.10.3</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-databind</artifactId>
+            <version>2.10.3</version>
+        </dependency>
+        
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-annotations</artifactId>
+            <version>2.10.3</version>
+        </dependency>
+        
         <!-- WIRED TEST RUNNER DEPENDENCIES -->
         <dependency>
             <groupId>com.atlassian.plugins</groupId>
@@ -37,65 +134,22 @@
             <version>${plugin.testrunner.version}</version>
             <scope>test</scope>
         </dependency>
+        
         <dependency>
             <groupId>javax.ws.rs</groupId>
             <artifactId>jsr311-api</artifactId>
             <version>1.1.1</version>
             <scope>provided</scope>
         </dependency>
+        
         <dependency>
             <groupId>com.google.code.gson</groupId>
             <artifactId>gson</artifactId>
             <version>2.2.2-atlassian-1</version>
         </dependency>
-        <dependency>
-            <groupId>com.vladsch.flexmark</groupId>
-            <artifactId>flexmark-all</artifactId>
-            <version>0.61.30</version>
-        </dependency>
-        <dependency>
-            <groupId>com.vladsch.flexmark</groupId>
-            <artifactId>flexmark-ext-anchorlink</artifactId>
-            <version>0.61.30</version>
-        </dependency>
-        <dependency>
-            <groupId>com.vladsch.flexmark</groupId>
-            <artifactId>flexmark-ext-autolink</artifactId>
-            <version>0.61.30</version>
-        </dependency>
-        <dependency>
-            <groupId>com.vladsch.flexmark</groupId>
-            <artifactId>flexmark-ext-superscript</artifactId>
-            <version>0.61.30</version>
-        </dependency>
-        <dependency>
-            <groupId>com.vladsch.flexmark</groupId>
-            <artifactId>flexmark-ext-youtube-embedded</artifactId>
-            <version>0.61.30</version>
-        </dependency>
-        <dependency>
-            <groupId>com.vladsch.flexmark</groupId>
-            <artifactId>flexmark-ext-toc</artifactId>
-            <version>0.61.30</version>
-        </dependency>
-        <dependency>
-            <!-- jsoup HTML parser library @ https://jsoup.org/ -->
-            <groupId>org.jsoup</groupId>
-            <artifactId>jsoup</artifactId>
-            <version>1.13.1</version>
-        </dependency>
-        <dependency>
-		    <groupId>com.googlecode.owasp-java-html-sanitizer</groupId>
-		    <artifactId>owasp-java-html-sanitizer</artifactId>
-		    <version>20191001.1</version>
-		</dependency>
-        <dependency>
-            <groupId>com.atlassian.plugin</groupId>
-            <artifactId>atlassian-spring-scanner-annotation</artifactId>
-            <version>${atlassian.spring.scanner.version}</version>
-            <scope>provided</scope>
-        </dependency>
+        
     </dependencies>
+    
     <build>
         <plugins>
             <plugin>

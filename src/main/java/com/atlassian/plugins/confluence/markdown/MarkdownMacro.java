@@ -44,14 +44,14 @@ import org.owasp.html.PolicyFactory;
 
 public class MarkdownMacro extends BaseMacro implements Macro {
 
-    private final XhtmlContent xhtmlUtils;
+     private final XhtmlContent xhtmlUtils;
 
     private PageBuilderService pageBuilderService;
 
     @Autowired
-    public MarkdownMacro(@ComponentImport PageBuilderService pageBuilderService, XhtmlContent xhtmlUtils) {
+    public MarkdownMacro(@ComponentImport PageBuilderService pageBuilderService, XhtmlContent xhtmlUtils) {  
         this.pageBuilderService = pageBuilderService;
-        this.xhtmlUtils = xhtmlUtils;
+         this.xhtmlUtils = xhtmlUtils;
     }
 
     @Override
@@ -68,7 +68,7 @@ public class MarkdownMacro extends BaseMacro implements Macro {
     public String execute(Map<String, String> parameters, String bodyContent, ConversionContext conversionContext) throws MacroExecutionException {
 
 
-        pageBuilderService.assembler().resources().requireWebResource("com.atlassian.plugins.confluence.markdown.confluence-markdown-macro:highlightjs");
+    	pageBuilderService.assembler().resources().requireWebResource("com.atlassian.plugins.confluence.markdown.confluence-markdown-macro:highlightjs");
 
 		MutableDataSet options = new MutableDataSet()
 			.set(HtmlRenderer.GENERATE_HEADER_ID, true)

@@ -1,0 +1,14 @@
+<html>
+<head>
+    <title>XSRF protection violated</title>
+    <meta name="decorator" content="atl.admin">
+</head>
+<body>
+    <div class="aui-message aui-message-error">
+        <p class="title">
+            <strong>Error!</strong>
+        </p>
+        <p>XSRF token was not provided for this request!</p>
+    </div>
+</body>
+</html>
