@@ -12,7 +12,7 @@
     
     <groupId>com.atlassian.plugins.confluence.markdown</groupId>
     <artifactId>confluence-markdown-macro</artifactId>
-    <version>1.5.8</version>
+    <version>1.6.0</version>
     
     <organization>
         <name>Atlas Authority</name>
@@ -49,37 +49,37 @@
         <dependency>
             <groupId>com.vladsch.flexmark</groupId>
             <artifactId>flexmark-all</artifactId>
-            <version>0.61.30</version>
+            <version>0.61.32</version>
         </dependency>
         
         <dependency>
             <groupId>com.vladsch.flexmark</groupId>
             <artifactId>flexmark-ext-anchorlink</artifactId>
-            <version>0.61.30</version>
+            <version>0.61.32</version>
         </dependency>
         
         <dependency>
             <groupId>com.vladsch.flexmark</groupId>
             <artifactId>flexmark-ext-autolink</artifactId>
-            <version>0.61.30</version>
+            <version>0.61.32</version>
         </dependency>
         
         <dependency>
             <groupId>com.vladsch.flexmark</groupId>
             <artifactId>flexmark-ext-superscript</artifactId>
-            <version>0.61.30</version>
+            <version>0.61.32</version>
         </dependency>
         
         <dependency>
             <groupId>com.vladsch.flexmark</groupId>
             <artifactId>flexmark-ext-youtube-embedded</artifactId>
-            <version>0.61.30</version>
+            <version>0.61.32</version>
         </dependency>
         
         <dependency>
             <groupId>com.vladsch.flexmark</groupId>
             <artifactId>flexmark-ext-toc</artifactId>
-            <version>0.61.30</version>
+            <version>0.61.32</version>
         </dependency>
         
         <dependency>
