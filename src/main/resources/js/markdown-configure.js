@@ -16,6 +16,14 @@ AJS.toInit(function ($) {
 		$("#remove-list").attr("disabled", true);
 	}
 
+	if (sessionStorage.getItem("markdown-config-save-success") === "true" && json.changed) {
+		$("#save-success-popup").show();
+		setTimeout(function() {
+			$("#save-success-popup").hide();
+		}, 3000);
+	} else { $("#save-success-popup").hide(); }
+	sessionStorage.setItem("markdown-config-save-success", "false");
+
     for (var i = 0; i < json.config.whitelist.length; i++) {
         var option = document.createElement("option");
         option.value = json.config.whitelist[i];
@@ -42,11 +50,13 @@ AJS.toInit(function ($) {
             "config": {
                 "whitelist": getIPPatterns("list-list"),
 				"enabled": document.getElementById("whitelist-enabled").checked
-            }
+            },
+			"changed": false
         };
 
         $("#data").val(JSON.stringify(json));
         $("#markdown-form").submit();
+		sessionStorage.setItem("markdown-config-save-success", "true");
     });
 
     /**

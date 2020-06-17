@@ -17,6 +17,20 @@ public class PluginAdminSaveConfigurationAction extends ConfluenceActionSupport 
 
     @Override
     public String execute() throws Exception {
+    	String oldConfig = (String) bandanaManager.getValue(context, PLUGIN_CONFIG_KEY);
+        MacroConfigModel oldModel = new MacroConfigModel();
+        if (oldConfig!= null && !oldConfig.trim().isEmpty() && !"null".equalsIgnoreCase(oldConfig)) {
+        	oldModel = objectMapper.readValue(oldConfig, MacroConfigModel.class);
+        }
+        if (oldModel == null) {
+        	oldModel = new MacroConfigModel();
+        }
+    	
+        if (model != null) {
+        	if (!oldModel.getConfig().equals(model.getConfig())) model.setIsChanged(true);
+        	else model.setIsChanged(false);
+        }
+    	
         bandanaManager.setValue(context, PLUGIN_CONFIG_KEY, objectMapper.writeValueAsString(model));
         return SUCCESS;
     }
