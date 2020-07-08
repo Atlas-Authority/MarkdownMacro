@@ -81,7 +81,8 @@ public class MarkdownMacro extends BaseMacro implements Macro {
 			.set(TablesExtension.DISCARD_EXTRA_COLUMNS, true)
 			.set(TablesExtension.HEADER_SEPARATOR_COLUMN_MATCH, true)	
 			.set(TablesExtension.CLASS_NAME, "confluenceTable");
-	
+        
+        Boolean linkifyHeaders = Boolean.parseBoolean(parameters.containsKey("LinkifyHeaders") ? parameters.get("LinkifyHeaders") : "true");
 		List<Extension> extensions = new ArrayList<>();
 		extensions.add(TablesExtension.create());
 		extensions.add(StrikethroughSubscriptExtension.create());
@@ -91,11 +92,14 @@ public class MarkdownMacro extends BaseMacro implements Macro {
 		extensions.add(FootnoteExtension.create());
 		extensions.add(WikiLinkExtension.create());
 		extensions.add(DefinitionExtension.create());
-		extensions.add(AnchorLinkExtension.create());
 		extensions.add(AutolinkExtension.create());
 		extensions.add(SuperscriptExtension.create());
 		extensions.add(YouTubeLinkExtension.create());
-		extensions.add(TocExtension.create());
+        extensions.add(TocExtension.create());
+        if (linkifyHeaders){
+            extensions.add(AnchorLinkExtension.create());
+            options.set(HtmlRenderer.GENERATE_HEADER_ID, true);
+        }
 	
 		options.set(Parser.EXTENSIONS, extensions);
 

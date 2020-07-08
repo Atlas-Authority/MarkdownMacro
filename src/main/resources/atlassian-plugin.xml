@@ -19,7 +19,9 @@
                  icon="/download/resources/com.atlassian.plugins.confluence.markdown.confluence-markdown-macro/images/pluginIcon.png"
                  documentation-url="https://spec.commonmark.org/0.28/">
         <category name="formatting"/>
-        <parameters />
+        <parameters>
+            <parameter name="LinkifyHeaders" type="boolean" default="true" />
+        </parameters>
     </xhtml-macro>
     
     <macro name="markdown"
@@ -28,7 +30,9 @@
            icon="/download/resources/com.atlassian.plugins.confluence.markdown.confluence-markdown-macro/images/pluginIcon.png"
            documentation-url="https://spec.commonmark.org/0.28/">
         <category name="formatting"/>
-        <parameters />
+        <parameters>
+            <parameter name="LinkifyHeaders" type="boolean" default="true" />
+        </parameters>
     </macro>
     
     <xhtml-macro name="markdown-from-url"
@@ -37,7 +41,9 @@
                  icon="/download/resources/com.atlassian.plugins.confluence.markdown.confluence-markdown-macro/images/pluginIcon.png"
                  documentation-url="https://spec.commonmark.org/0.28/">
         <category name="formatting"/>
-        <parameters />
+        <parameters>
+            <parameter name="LinkifyHeaders" type="boolean" default="true" />
+        </parameters>
 	</xhtml-macro>
 	
     <macro name="markdown-from-url"
@@ -46,7 +52,9 @@
            icon="/download/resources/com.atlassian.plugins.confluence.markdown.confluence-markdown-macro/images/pluginIcon.png"
            documentation-url="https://spec.commonmark.org/0.28/">
         <category name="formatting"/>
-        <parameters />
+        <parameters>
+            <parameter name="LinkifyHeaders" type="boolean" default="true" />
+        </parameters>
     </macro>
     
     <web-section key="markdown-macro-admin-section" name="Markdown Macro admin section" location="system.admin" weight="10">
