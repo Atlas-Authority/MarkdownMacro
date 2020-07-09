@@ -49,6 +49,7 @@ import java.net.URL;
 import java.net.UnknownHostException;
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.ArrayList;
 import java.util.List;
@@ -213,23 +214,11 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 				.set(TablesExtension.HEADER_SEPARATOR_COLUMN_MATCH, true)
 				.set(TablesExtension.CLASS_NAME, "confluenceTable");
 
-			List<Extension> extensions = new ArrayList<>();
-			extensions.add(TablesExtension.create());
-			extensions.add(StrikethroughSubscriptExtension.create());
-			extensions.add(StrikethroughSubscriptExtension.create());
-			extensions.add(InsExtension.create());
-			extensions.add(TaskListExtension.create());
-			extensions.add(FootnoteExtension.create());
-			extensions.add(WikiLinkExtension.create());
-			extensions.add(DefinitionExtension.create());
-			extensions.add(AnchorLinkExtension.create());
-			extensions.add(AutolinkExtension.create());
-			extensions.add(SuperscriptExtension.create());
-			extensions.add(YouTubeLinkExtension.create());
-			extensions.add(TocExtension.create());
+			String pathToRepository = "";
+			String exceptionsToReturn = "";
+			String html = "";
+			String toParse = "";
 
-			options.set(Parser.EXTENSIONS, extensions);
-			
 			String highlightjs = "<script>\n" +
 					"AJS.$('[data-macro-name=\"markdown-from-url\"] code').each(function(i, block) {\n" +
 					"    hljs.highlightBlock(block);\n" +
@@ -241,16 +230,53 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 					"pre > code {display: block !important;}\n" +
 					"</style>";
 
+			URL importFrom = null;
+			try {
+				importFrom = new URL(bodyContent);
+			} catch (MalformedURLException e) {
+				e.printStackTrace();
+			}
+
+			Boolean useRelativePathsAzureDevOps = Boolean.parseBoolean(parameters.containsKey("UseAzureDevOpsRelativePathUrls") ? parameters.get("UseAzureDevOpsRelativePathUrls") : "false");
+
+			List<Extension> extensions = new ArrayList<>();
+			extensions.add(TablesExtension.create());
+			extensions.add(StrikethroughSubscriptExtension.create());
+			extensions.add(StrikethroughSubscriptExtension.create());
+			extensions.add(InsExtension.create());
+			extensions.add(TaskListExtension.create());
+			extensions.add(FootnoteExtension.create());
+			extensions.add(WikiLinkExtension.create());
+			extensions.add(DefinitionExtension.create());
+			extensions.add(AnchorLinkExtension.create());
+			extensions.add(SuperscriptExtension.create());
+			extensions.add(YouTubeLinkExtension.create());
+			extensions.add(TocExtension.create());
+
+			if (useRelativePathsAzureDevOps) {
+				pathToRepository = parameters.get("LinkAzureDevOpsRepository");
+				Path repoPath = MarkdownRelativePathsDevOpsHelper.getPathFromRawMarkdownUrl(importFrom);
+
+				MarkdownRelativeDevOpsUrls.relativePathDataKey = repoPath.toString();
+				MarkdownRelativeDevOpsUrls.devOpsUrlDataKey = pathToRepository;
+
+				extensions.add(MarkdownRelativeDevOpsUrls.CustomExtension.create());
+			}
+			else
+			{
+				extensions.add(AutolinkExtension.create());
+			}
+
+			options.set(Parser.EXTENSIONS, extensions);
+
 			Parser parser = Parser.builder(options).build();
 			HtmlRenderer renderer = HtmlRenderer.builder(options).build();
-			
-			String exceptionsToReturn = "";
-			String html = "";
-			String toParse = "";
 			try {
 				initWhitelistConfiguration();
-				
-				URL importFrom = new URL(bodyContent);
+
+				if (importFrom == null){
+					throw new Exception("import Url is invalid");
+				}
 				
 				if(!importFrom.getProtocol().startsWith("http")) {
 					throw new MalformedURLException();
@@ -329,6 +355,9 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 					        .allowTextIn("table")
 			        		.toFactory();
 			        String sanitizedBody = policy.sanitize(body.html());
+					if (useRelativePathsAzureDevOps) {
+						sanitizedBody = sanitizedBody.replace("?path&#61;", "?path=");
+					}
 			        html =  sanitizedBody +  highlightjs + highlightjscss;
 
 					return html;
