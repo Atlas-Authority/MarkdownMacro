@@ -248,10 +248,13 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 			extensions.add(FootnoteExtension.create());
 			extensions.add(WikiLinkExtension.create());
 			extensions.add(DefinitionExtension.create());
-			extensions.add(AnchorLinkExtension.create());
 			extensions.add(SuperscriptExtension.create());
 			extensions.add(YouTubeLinkExtension.create());
 			extensions.add(TocExtension.create());
+			if (linkifyHeaders){
+				extensions.add(AnchorLinkExtension.create());
+				options.set(HtmlRenderer.GENERATE_HEADER_ID, true);
+			}
 
 			if (useRelativePathsAzureDevOps) {
 				pathToRepository = parameters.get("LinkAzureDevOpsRepository");

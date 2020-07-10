@@ -19,7 +19,9 @@
                  icon="/download/resources/com.atlassian.plugins.confluence.markdown.confluence-markdown-macro/images/pluginIcon.png"
                  documentation-url="https://spec.commonmark.org/0.28/">
         <category name="formatting"/>
-        <parameters />
+        <parameters>
+            <parameter name="LinkifyHeaders" type="boolean" default="true" />
+        </parameters>
     </xhtml-macro>
     
     <macro name="markdown"
@@ -28,7 +30,9 @@
            icon="/download/resources/com.atlassian.plugins.confluence.markdown.confluence-markdown-macro/images/pluginIcon.png"
            documentation-url="https://spec.commonmark.org/0.28/">
         <category name="formatting"/>
-        <parameters />
+        <parameters>
+            <parameter name="LinkifyHeaders" type="boolean" default="true" />
+        </parameters>
     </macro>
     
     <xhtml-macro name="markdown-from-url"
@@ -38,10 +42,9 @@
                  documentation-url="https://spec.commonmark.org/0.28/">
         <category name="formatting"/>
         <parameters>
-            <parameter name="UseAzureDevOpsRelativePathUrls" type="boolean" default="false">
-            </parameter>
-            <parameter name="LinkAzureDevOpsRepository" type="string" default="">
-            </parameter>
+            <parameter name="LinkifyHeaders" type="boolean" default="true" />
+            <parameter name="UseAzureDevOpsRelativePathUrls" type="boolean" default="false" />
+            <parameter name="LinkAzureDevOpsRepository" type="string" default="" />
         </parameters>
 	</xhtml-macro>
 	
@@ -52,10 +55,9 @@
            documentation-url="https://spec.commonmark.org/0.28/">
         <category name="formatting"/>
         <parameters>
-            <parameter name="UseAzureDevOpsRelativePathUrls" type="boolean" default="false">
-            </parameter>
-            <parameter name="LinkAzureDevOpsRepository" type="string" default="">
-            </parameter>
+            <parameter name="LinkifyHeaders" type="boolean" default="true" />
+            <parameter name="UseAzureDevOpsRelativePathUrls" type="boolean" default="false" />
+            <parameter name="LinkAzureDevOpsRepository" type="string" default="" />
         </parameters>
     </macro>
     
