@@ -238,7 +238,9 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 			}
 
 			Boolean linkifyHeaders = Boolean.parseBoolean(parameters.containsKey("LinkifyHeaders") ? parameters.get("LinkifyHeaders") : "true");
-			Boolean useRelativePathsAzureDevOps = Boolean.parseBoolean(parameters.containsKey("UseAzureDevOpsRelativePathUrls") ? parameters.get("UseAzureDevOpsRelativePathUrls") : "false");
+			Boolean useRelativePathsAzureDevOps = parameters.containsKey("LinkAzureDevOpsRepository")
+					? !MarkdownRelativePathsDevOpsHelper.IsNullOrEmpty(parameters.get("LinkAzureDevOpsRepository"))
+					: false;
 
 			List<Extension> extensions = new ArrayList<>();
 			extensions.add(TablesExtension.create());

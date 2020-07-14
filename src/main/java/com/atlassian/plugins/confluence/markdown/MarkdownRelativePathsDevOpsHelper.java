@@ -30,4 +30,10 @@ public class MarkdownRelativePathsDevOpsHelper {
 
         return mainPath.resolve(relativePath);
     }
+
+
+    public static boolean IsNullOrEmpty(String str)
+    {
+        return str == null || str.isEmpty();
+    }
 }
