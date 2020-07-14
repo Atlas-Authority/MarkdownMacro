@@ -32,7 +32,7 @@ public class MarkdownRelativePathsDevOpsHelper {
     }
 
 
-    public static boolean IsNullOrEmpty(String str)
+    public static boolean isNullOrEmpty(String str)
     {
         return str == null || str.isEmpty();
     }
