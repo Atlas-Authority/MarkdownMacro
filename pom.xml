@@ -169,6 +169,9 @@
                     <productDataVersion>${confluence.data.version}</productDataVersion>
                     <enableQuickReload>true</enableQuickReload>
                     <enableFastdev>false</enableFastdev>
+                    <compressJs>false</compressJs>
+                    <compressCss>false</compressCss>
+                    <compressResources>false</compressResources>
                 </configuration>
             </plugin>
             <plugin>
