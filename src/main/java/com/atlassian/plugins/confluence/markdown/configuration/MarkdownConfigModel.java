@@ -6,6 +6,15 @@ import java.util.List;
 public class MarkdownConfigModel {
     private List<String> whitelist = new ArrayList<String>();
     private boolean enabled = false;
+    private boolean isAzureDevOpsEnabled = false;
+
+    public boolean getIsAzureDevOpsEnabled(){
+        return isAzureDevOpsEnabled;
+    }
+
+    public void setIsAzureDevOpsEnabled(boolean isAzureDevOpsEnabled){
+        this.isAzureDevOpsEnabled = isAzureDevOpsEnabled;
+    }
 
     public List<String> getWhitelist() {
         return whitelist;
@@ -32,6 +41,7 @@ public class MarkdownConfigModel {
     	
     	if (((MarkdownConfigModel) o).getEnabled() != this.enabled) return false;
     	if (!((MarkdownConfigModel) o).getWhitelist().equals(this.whitelist)) return false;
+        if (((MarkdownConfigModel) o).getIsAzureDevOpsEnabled() != this.isAzureDevOpsEnabled) return false;
     	
     	return true;
     }
