@@ -65,7 +65,7 @@ public class MarkdownRelativeDevOpsUrls {
                     // should be prefixed with http://, we will just add it
                     return link.withStatus(LinkStatus.INVALID)
                             .withUrl("http://" + url);
-                } else if (url.startsWith("./")) {
+                } else {
                     if (devOpsUrl.equals("null") || markdownPath.toString() == null) {
                         return link.withStatus(LinkStatus.INVALID);
                     }
