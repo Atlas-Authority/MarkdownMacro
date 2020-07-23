@@ -30,7 +30,7 @@
 	        <p>Changes saved successfully.</p>
 	    </div>
 
-        <p style="padding: 10px 0;">Enable Azure DevOps custom relative path resolution. Otherwise classic github-style relative path support is used.</p>
+        <h3 style="padding: 10px 0;">Enable Azure DevOps custom relative path resolution. Otherwise classic github-style relative path support is used.</h3>
 
         <div class="flex-box">
             <div class="checkbox">
@@ -39,7 +39,9 @@
             </div>
         </div>
 
-        <p style="padding: 10px 0;">Enable URL Whitelist feature. If not enabled, all domains will be allowed.</p>
+        <div class="clearer"></div>
+
+        <h3 style="padding: 10px 0;">Enable URL Whitelist feature. If not enabled, all domains will be allowed.</h3>
         
         <div class="flex-box">
             <div class="checkbox">

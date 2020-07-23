@@ -21,8 +21,8 @@ function hideParameter(param, parameterField, toHide){
         var parameterField = AJS.MacroBrowser.ParameterFields["_hidden"](param, {});
 
         if (!parameterField.getValue()) {
-            // by default placing false value
-            parameterField.setValue("false");
+            // by default placing null value
+            parameterField.setValue(null);
         }
     }
 
@@ -34,11 +34,6 @@ AJS.MacroBrowser.setMacroJsOverride("markdown-from-url", {
         string: {
             "LinkAzureDevOpsRepository": function (param) {
                 return processParameter(param, "string");
-            }
-        },
-        boolean: {
-            "UseAzureDevOpsRelativePathUrls": function (param) {
-                return processParameter(param, "boolean");
             }
         }
     }

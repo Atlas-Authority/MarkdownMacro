@@ -71,6 +71,7 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
     private ObjectMapper objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     private List<String[]> whitelistDomains;
     private List<InetAddress> whitelistIPs;
+	private boolean isAzureDevOpsEnabled;
     private boolean enabled;
 
     private PageBuilderService pageBuilderService;
@@ -106,7 +107,21 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
         this.xhtmlUtils = xhtmlUtils;
         this.bandanaManager = bandanaManager;
     }
-    
+
+	private void loadMarkdownFromUrlConfigSettings(){
+		MacroConfigModel model = new MacroConfigModel();
+		String config = (String) this.bandanaManager.getValue(context, PLUGIN_CONFIG_KEY);
+		if (config != null) {
+			try {
+				model = objectMapper.readValue(config, MacroConfigModel.class);
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		}
+
+		isAzureDevOpsEnabled = model.getConfig().getIsAzureDevOpsEnabled();
+	}
+
     private void initWhitelistConfiguration() throws UnknownHostException {
         MacroConfigModel model = new MacroConfigModel();
         String config = (String) this.bandanaManager.getValue(context, PLUGIN_CONFIG_KEY);
@@ -237,8 +252,12 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 				e.printStackTrace();
 			}
 
+			loadMarkdownFromUrlConfigSettings();
+
 			Boolean linkifyHeaders = Boolean.parseBoolean(parameters.containsKey("LinkifyHeaders") ? parameters.get("LinkifyHeaders") : "true");
-			Boolean useRelativePathsAzureDevOps = Boolean.parseBoolean(parameters.containsKey("UseAzureDevOpsRelativePathUrls") ? parameters.get("UseAzureDevOpsRelativePathUrls") : "false");
+			Boolean useRelativePathsAzureDevOps = isAzureDevOpsEnabled && parameters.containsKey("LinkAzureDevOpsRepository")
+					? !MarkdownRelativePathsDevOpsHelper.isNullOrEmpty(parameters.get("LinkAzureDevOpsRepository"))
+					: false;
 
 			List<Extension> extensions = new ArrayList<>();
 			extensions.add(TablesExtension.create());
