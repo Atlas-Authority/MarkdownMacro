@@ -49,6 +49,7 @@ import java.net.URL;
 import java.net.UnknownHostException;
 import java.net.HttpURLConnection;
 import java.net.InetAddress;
+import java.nio.file.Path;
 import java.util.Map;
 import java.util.ArrayList;
 import java.util.List;
@@ -70,6 +71,7 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
     private ObjectMapper objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     private List<String[]> whitelistDomains;
     private List<InetAddress> whitelistIPs;
+	private boolean isAzureDevOpsEnabled;
     private boolean enabled;
 
     private PageBuilderService pageBuilderService;
@@ -105,7 +107,21 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
         this.xhtmlUtils = xhtmlUtils;
         this.bandanaManager = bandanaManager;
     }
-    
+
+	private void loadMarkdownFromUrlConfigSettings(){
+		MacroConfigModel model = new MacroConfigModel();
+		String config = (String) this.bandanaManager.getValue(context, PLUGIN_CONFIG_KEY);
+		if (config != null) {
+			try {
+				model = objectMapper.readValue(config, MacroConfigModel.class);
+			} catch (IOException e) {
+				throw new RuntimeException(e);
+			}
+		}
+
+		isAzureDevOpsEnabled = model.getConfig().getIsAzureDevOpsEnabled();
+	}
+
     private void initWhitelistConfiguration() throws UnknownHostException {
         MacroConfigModel model = new MacroConfigModel();
         String config = (String) this.bandanaManager.getValue(context, PLUGIN_CONFIG_KEY);
@@ -212,28 +228,12 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 				.set(TablesExtension.DISCARD_EXTRA_COLUMNS, true)
 				.set(TablesExtension.HEADER_SEPARATOR_COLUMN_MATCH, true)
 				.set(TablesExtension.CLASS_NAME, "confluenceTable");
-			
-			Boolean linkifyHeaders = Boolean.parseBoolean(parameters.containsKey("LinkifyHeaders") ? parameters.get("LinkifyHeaders") : "true");				
-			List<Extension> extensions = new ArrayList<>();
-			extensions.add(TablesExtension.create());
-			extensions.add(StrikethroughSubscriptExtension.create());
-			extensions.add(StrikethroughSubscriptExtension.create());
-			extensions.add(InsExtension.create());
-			extensions.add(TaskListExtension.create());
-			extensions.add(FootnoteExtension.create());
-			extensions.add(WikiLinkExtension.create());
-			extensions.add(DefinitionExtension.create());
-			extensions.add(AutolinkExtension.create());
-			extensions.add(SuperscriptExtension.create());
-			extensions.add(YouTubeLinkExtension.create());
-			extensions.add(TocExtension.create());
-			if (linkifyHeaders){
-				extensions.add(AnchorLinkExtension.create());
-				options.set(HtmlRenderer.GENERATE_HEADER_ID, true);
-			}
 
-			options.set(Parser.EXTENSIONS, extensions);
-			
+			String pathToRepository = "";
+			String exceptionsToReturn = "";
+			String html = "";
+			String toParse = "";
+
 			String highlightjs = "<script>\n" +
 					"AJS.$('[data-macro-name=\"markdown-from-url\"] code').each(function(i, block) {\n" +
 					"    hljs.highlightBlock(block);\n" +
@@ -245,16 +245,61 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 					"pre > code {display: block !important;}\n" +
 					"</style>";
 
+			URL importFrom = null;
+			try {
+				importFrom = new URL(bodyContent);
+			} catch (MalformedURLException e) {
+				e.printStackTrace();
+			}
+
+			loadMarkdownFromUrlConfigSettings();
+
+			Boolean linkifyHeaders = Boolean.parseBoolean(parameters.containsKey("LinkifyHeaders") ? parameters.get("LinkifyHeaders") : "true");
+			Boolean useRelativePathsAzureDevOps = isAzureDevOpsEnabled && parameters.containsKey("LinkAzureDevOpsRepository")
+					? !MarkdownRelativePathsDevOpsHelper.isNullOrEmpty(parameters.get("LinkAzureDevOpsRepository"))
+					: false;
+
+			List<Extension> extensions = new ArrayList<>();
+			extensions.add(TablesExtension.create());
+			extensions.add(StrikethroughSubscriptExtension.create());
+			extensions.add(StrikethroughSubscriptExtension.create());
+			extensions.add(InsExtension.create());
+			extensions.add(TaskListExtension.create());
+			extensions.add(FootnoteExtension.create());
+			extensions.add(WikiLinkExtension.create());
+			extensions.add(DefinitionExtension.create());
+			extensions.add(SuperscriptExtension.create());
+			extensions.add(YouTubeLinkExtension.create());
+			extensions.add(TocExtension.create());
+			if (linkifyHeaders){
+				extensions.add(AnchorLinkExtension.create());
+				options.set(HtmlRenderer.GENERATE_HEADER_ID, true);
+			}
+
+			if (useRelativePathsAzureDevOps) {
+				pathToRepository = parameters.get("LinkAzureDevOpsRepository");
+				Path repoPath = MarkdownRelativePathsDevOpsHelper.getPathFromRawMarkdownUrl(importFrom);
+
+				MarkdownRelativeDevOpsUrls.relativePathDataKey = repoPath.toString();
+				MarkdownRelativeDevOpsUrls.devOpsUrlDataKey = pathToRepository;
+
+				extensions.add(MarkdownRelativeDevOpsUrls.CustomExtension.create());
+			}
+			else
+			{
+				extensions.add(AutolinkExtension.create());
+			}
+
+			options.set(Parser.EXTENSIONS, extensions);
+
 			Parser parser = Parser.builder(options).build();
 			HtmlRenderer renderer = HtmlRenderer.builder(options).build();
-			
-			String exceptionsToReturn = "";
-			String html = "";
-			String toParse = "";
 			try {
 				initWhitelistConfiguration();
-				
-				URL importFrom = new URL(bodyContent);
+
+				if (importFrom == null){
+					throw new Exception("import Url is invalid");
+				}
 				
 				if(!importFrom.getProtocol().startsWith("http")) {
 					throw new MalformedURLException();
@@ -333,6 +378,9 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 					        .allowTextIn("table")
 			        		.toFactory();
 			        String sanitizedBody = policy.sanitize(body.html());
+					if (useRelativePathsAzureDevOps) {
+						sanitizedBody = sanitizedBody.replace("?path&#61;", "?path=");
+					}
 			        html =  sanitizedBody +  highlightjs + highlightjscss;
 
 					return html;

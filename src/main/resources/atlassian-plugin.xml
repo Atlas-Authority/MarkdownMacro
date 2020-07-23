@@ -42,7 +42,14 @@
                  documentation-url="https://spec.commonmark.org/0.28/">
         <category name="formatting"/>
         <parameters>
-            <parameter name="LinkifyHeaders" type="boolean" default="true" />
+            <parameter name="LinkifyHeaders" type="boolean" default="true">
+                <option key="showNameInPlaceholder" value="false" />
+                <option key="showValueInPlaceholder" value="false" />
+            </parameter>
+            <parameter name="LinkAzureDevOpsRepository" type="string" default="">
+                <option key="showNameInPlaceholder" value="false" />
+                <option key="showValueInPlaceholder" value="false" />
+            </parameter>
         </parameters>
 	</xhtml-macro>
 	
@@ -53,7 +60,14 @@
            documentation-url="https://spec.commonmark.org/0.28/">
         <category name="formatting"/>
         <parameters>
-            <parameter name="LinkifyHeaders" type="boolean" default="true" />
+            <parameter name="LinkifyHeaders" type="boolean" default="true">
+                <option key="showNameInPlaceholder" value="false" />
+                <option key="showValueInPlaceholder" value="false" />
+            </parameter>
+            <parameter name="LinkAzureDevOpsRepository" type="string" default="">
+                <option key="showNameInPlaceholder" value="false" />
+                <option key="showValueInPlaceholder" value="false" />
+            </parameter>
         </parameters>
     </macro>
     
@@ -100,5 +114,15 @@
             </action>
         </package>
     </xwork>
-	
+
+    <rest key="markdown-from-url-rest-endpoint" path="/markdown-from-url" version="1.0">
+        <description>Markdown From Url REST Endpoint</description>
+    </rest>
+
+    <web-resource key="hidden-field-parameter" name="Add a hidden field">
+        <resource type="download" name="hidden-parameter-field.js" location="js/hidden-parameter-field.js" />
+        <dependency>confluence.editor.actions:editor-macro-browser</dependency>
+        <context>macro-browser</context>
+    </web-resource>
+
 </atlassian-plugin>

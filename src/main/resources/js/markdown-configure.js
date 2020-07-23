@@ -2,6 +2,8 @@ AJS.toInit(function ($) {
     var sJson = $("#data").val();
     var json = JSON.parse(sJson);
 
+    $("#azure-customs-enabled").attr("checked", json.config.isAzureDevOpsEnabled);
+
 	if (json.config.enabled) {
 		$("#whitelist-enabled").attr("checked", true);
 		$("#list-input").attr("disabled", false);
@@ -49,7 +51,8 @@ AJS.toInit(function ($) {
         var json = {
             "config": {
                 "whitelist": getIPPatterns("list-list"),
-				"enabled": document.getElementById("whitelist-enabled").checked
+				"enabled": document.getElementById("whitelist-enabled").checked,
+                "isAzureDevOpsEnabled": document.getElementById("azure-customs-enabled").checked
             },
 			"changed": false
         };

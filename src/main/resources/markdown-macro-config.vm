@@ -29,8 +29,19 @@
 	    <div class="aui-message aui-message-confirmation" id="save-success-popup" style="display: none;">
 	        <p>Changes saved successfully.</p>
 	    </div>
-        
-        <p style="padding: 10px 0;">Enable URL Whitelist feature. If not enabled, all domains will be allowed.</p>
+
+        <h3 style="padding: 10px 0;">Enable Azure DevOps custom relative path resolution. Otherwise classic github-style relative path support is used.</h3>
+
+        <div class="flex-box">
+            <div class="checkbox">
+                <input type="checkbox" id="azure-customs-enabled" class="checkbox" name="azure-customs-enabled">
+                <label for="azure-customs-enabled">Enable Azure DevOps Relative Paths for Markdown From Url Macro</label>
+            </div>
+        </div>
+
+        <div class="clearer"></div>
+
+        <h3 style="padding: 10px 0;">Enable URL Whitelist feature. If not enabled, all domains will be allowed.</h3>
         
         <div class="flex-box">
             <div class="checkbox">
