@@ -91,7 +91,7 @@ public class MarkdownRelativeDevOpsUrls {
                 }
 
                 // relative paths processed here
-                Path joinedPath = MarkdownRelativePathsDevOpsHelper.combinePaths(markdownPath, url);
+                Path joinedPath = MarkdownHelper.combinePaths(markdownPath, url);
 
                 String formatToUrlPath = joinedPath.toString();
                 formatToUrlPath = formatToUrlPath.replace("\\", "%2F");

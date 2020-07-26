@@ -38,8 +38,8 @@ public class ResizableImageInlineParserExtension implements InlineParserExtensio
 
                 BasedSequence text = matches[1];
                 BasedSequence source = matches[2];
-                BasedSequence height = matches[3];
-                BasedSequence width = matches[4];
+                BasedSequence width = matches[3];
+                BasedSequence height = matches[4];
 
                 ResizableImage image = new ResizableImage(text, source, width, height);
                 inlineParser.getBlock().appendChild(image);

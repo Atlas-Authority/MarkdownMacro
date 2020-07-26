@@ -1,9 +1,11 @@
 package com.atlassian.plugins.confluence.markdown;
 
+import com.atlassian.bandana.BandanaManager;
 import com.atlassian.confluence.content.render.xhtml.ConversionContext;
 import com.atlassian.confluence.content.render.xhtml.DefaultConversionContext;
 import com.atlassian.confluence.macro.Macro;
 import com.atlassian.confluence.macro.MacroExecutionException;
+import com.atlassian.confluence.setup.bandana.ConfluenceBandanaContext;
 import com.atlassian.confluence.xhtml.api.XhtmlContent;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.plugins.confluence.markdown.ext.DevOpsResizableImage.ResizableImageExtension;
@@ -48,11 +50,14 @@ public class MarkdownMacro extends BaseMacro implements Macro {
     private final XhtmlContent xhtmlUtils;
 
     private PageBuilderService pageBuilderService;
+    private BandanaManager bandanaManager;
+    private ConfluenceBandanaContext context = new ConfluenceBandanaContext("markdown-plugin");
 
     @Autowired
-    public MarkdownMacro(@ComponentImport PageBuilderService pageBuilderService, XhtmlContent xhtmlUtils) {  
+    public MarkdownMacro(@ComponentImport PageBuilderService pageBuilderService, XhtmlContent xhtmlUtils, BandanaManager bandanaManager) {  
         this.pageBuilderService = pageBuilderService;
-         this.xhtmlUtils = xhtmlUtils;
+        this.xhtmlUtils = xhtmlUtils;
+        this.bandanaManager = bandanaManager;
     }
 
     @Override
@@ -96,13 +101,18 @@ public class MarkdownMacro extends BaseMacro implements Macro {
 		extensions.add(SuperscriptExtension.create());
 		extensions.add(YouTubeLinkExtension.create());
         extensions.add(TocExtension.create());
-        extensions.add(ResizableImageExtension.create());
 
         if (linkifyHeaders){
             extensions.add(AnchorLinkExtension.create());
             options.set(HtmlRenderer.GENERATE_HEADER_ID, true);
         }
-	
+
+        Boolean isAzureDevOpsEnabled = MarkdownHelper.GetMarkdownConfig(bandanaManager, context)
+                                                     .getIsAzureDevOpsEnabled();
+        if (isAzureDevOpsEnabled){
+            extensions.add(ResizableImageExtension.create());
+        }
+
 		options.set(Parser.EXTENSIONS, extensions);
 
         String highlightjs = "<script>\n" +

@@ -106,20 +106,6 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
         this.bandanaManager = bandanaManager;
     }
 
-	private void loadMarkdownFromUrlConfigSettings(){
-		MacroConfigModel model = new MacroConfigModel();
-		String config = (String) this.bandanaManager.getValue(context, PLUGIN_CONFIG_KEY);
-		if (config != null) {
-			try {
-				model = objectMapper.readValue(config, MacroConfigModel.class);
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
-		}
-
-		isAzureDevOpsEnabled = model.getConfig().getIsAzureDevOpsEnabled();
-	}
-
     private void initWhitelistConfiguration() throws UnknownHostException {
         MacroConfigModel model = new MacroConfigModel();
         String config = (String) this.bandanaManager.getValue(context, PLUGIN_CONFIG_KEY);
@@ -250,11 +236,12 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 				e.printStackTrace();
 			}
 
-			loadMarkdownFromUrlConfigSettings();
+			isAzureDevOpsEnabled = MarkdownHelper.GetMarkdownConfig(bandanaManager, context)
+												 .getIsAzureDevOpsEnabled();
 
 			Boolean linkifyHeaders = Boolean.parseBoolean(parameters.containsKey("LinkifyHeaders") ? parameters.get("LinkifyHeaders") : "true");
 			Boolean useRelativePathsAzureDevOps = isAzureDevOpsEnabled && parameters.containsKey("LinkAzureDevOpsRepository")
-					? !MarkdownRelativePathsDevOpsHelper.isNullOrEmpty(parameters.get("LinkAzureDevOpsRepository"))
+					? !MarkdownHelper.isNullOrEmpty(parameters.get("LinkAzureDevOpsRepository"))
 					: false;
 
 			List<Extension> extensions = new ArrayList<>();
@@ -268,16 +255,19 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 			extensions.add(SuperscriptExtension.create());
 			extensions.add(YouTubeLinkExtension.create());
 			extensions.add(TocExtension.create());
-			extensions.add(ResizableImageExtension.create());
 		
 			if (linkifyHeaders){
 				extensions.add(AnchorLinkExtension.create());
 				options.set(HtmlRenderer.GENERATE_HEADER_ID, true);
 			}
 
+			if (isAzureDevOpsEnabled){
+				extensions.add(ResizableImageExtension.create());
+			}
+
 			if (useRelativePathsAzureDevOps) {
 				pathToRepository = parameters.get("LinkAzureDevOpsRepository");
-				Path repoPath = MarkdownRelativePathsDevOpsHelper.getPathFromRawMarkdownUrl(importFrom);
+				Path repoPath = MarkdownHelper.getPathFromRawMarkdownUrl(importFrom);
 
 				MarkdownRelativeDevOpsUrls.relativePathDataKey = repoPath.toString();
 				MarkdownRelativeDevOpsUrls.devOpsUrlDataKey = pathToRepository;
