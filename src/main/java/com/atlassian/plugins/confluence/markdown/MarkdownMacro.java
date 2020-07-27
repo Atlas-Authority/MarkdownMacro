@@ -1,11 +1,14 @@
 package com.atlassian.plugins.confluence.markdown;
 
+import com.atlassian.bandana.BandanaManager;
 import com.atlassian.confluence.content.render.xhtml.ConversionContext;
 import com.atlassian.confluence.content.render.xhtml.DefaultConversionContext;
 import com.atlassian.confluence.macro.Macro;
 import com.atlassian.confluence.macro.MacroExecutionException;
+import com.atlassian.confluence.setup.bandana.ConfluenceBandanaContext;
 import com.atlassian.confluence.xhtml.api.XhtmlContent;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
+import com.atlassian.plugins.confluence.markdown.ext.DevOpsResizableImage.ResizableImageExtension;
 import com.atlassian.renderer.RenderContext;
 import com.atlassian.renderer.v2.RenderMode;
 import com.atlassian.renderer.v2.macro.BaseMacro;
@@ -44,14 +47,17 @@ import org.owasp.html.PolicyFactory;
 
 public class MarkdownMacro extends BaseMacro implements Macro {
 
-     private final XhtmlContent xhtmlUtils;
+    private final XhtmlContent xhtmlUtils;
 
     private PageBuilderService pageBuilderService;
+    private BandanaManager bandanaManager;
+    private ConfluenceBandanaContext context = new ConfluenceBandanaContext("markdown-plugin");
 
     @Autowired
-    public MarkdownMacro(@ComponentImport PageBuilderService pageBuilderService, XhtmlContent xhtmlUtils) {  
+    public MarkdownMacro(@ComponentImport PageBuilderService pageBuilderService, XhtmlContent xhtmlUtils, BandanaManager bandanaManager) {  
         this.pageBuilderService = pageBuilderService;
-         this.xhtmlUtils = xhtmlUtils;
+        this.xhtmlUtils = xhtmlUtils;
+        this.bandanaManager = bandanaManager;
     }
 
     @Override
@@ -86,7 +92,6 @@ public class MarkdownMacro extends BaseMacro implements Macro {
 		List<Extension> extensions = new ArrayList<>();
 		extensions.add(TablesExtension.create());
 		extensions.add(StrikethroughSubscriptExtension.create());
-		extensions.add(StrikethroughSubscriptExtension.create());
 		extensions.add(InsExtension.create());
 		extensions.add(TaskListExtension.create());
 		extensions.add(FootnoteExtension.create());
@@ -96,11 +101,18 @@ public class MarkdownMacro extends BaseMacro implements Macro {
 		extensions.add(SuperscriptExtension.create());
 		extensions.add(YouTubeLinkExtension.create());
         extensions.add(TocExtension.create());
+
         if (linkifyHeaders){
             extensions.add(AnchorLinkExtension.create());
             options.set(HtmlRenderer.GENERATE_HEADER_ID, true);
         }
-	
+
+        Boolean isAzureDevOpsEnabled = MarkdownHelper.GetMarkdownConfig(bandanaManager, context)
+                                                     .getIsAzureDevOpsEnabled();
+        if (isAzureDevOpsEnabled){
+            extensions.add(ResizableImageExtension.create());
+        }
+
 		options.set(Parser.EXTENSIONS, extensions);
 
         String highlightjs = "<script>\n" +
@@ -145,7 +157,7 @@ public class MarkdownMacro extends BaseMacro implements Macro {
         	    .allowAttributes("href").onElements("a")
 		        .allowAttributes("align", "class").onElements("table", "tr", "td", "th", "thead", "tbody")
         		.allowAttributes("id").onElements("h1", "h2", "h3", "h4", "h5", "h6", "sup", "li")
-        	    .allowAttributes("alt", "src").onElements("img")
+        	    .allowAttributes("alt", "src", "width", "height").onElements("img")
         	    .allowAttributes("class").onElements("li", "code")
         	    .allowAttributes("type", "class", "checked", "disabled", "readonly").onElements("input")
 		        .allowTextIn("table")

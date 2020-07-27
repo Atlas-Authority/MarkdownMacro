@@ -1,5 +1,22 @@
 package com.atlassian.plugins.confluence.markdown;
 
+import static com.atlassian.plugins.confluence.markdown.configuration.PluginAdminGetConfigurationAction.PLUGIN_CONFIG_KEY;
+
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.InetAddress;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+
 import com.atlassian.bandana.BandanaManager;
 import com.atlassian.confluence.content.render.xhtml.ConversionContext;
 import com.atlassian.confluence.content.render.xhtml.DefaultConversionContext;
@@ -8,6 +25,9 @@ import com.atlassian.confluence.macro.MacroExecutionException;
 import com.atlassian.confluence.setup.bandana.ConfluenceBandanaContext;
 import com.atlassian.confluence.xhtml.api.XhtmlContent;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
+import com.atlassian.plugins.confluence.markdown.configuration.MacroConfigModel;
+import com.atlassian.plugins.confluence.markdown.ext.DevOpsResizableImage.ResizableImageExtension;
+import com.atlassian.plugins.confluence.markdown.utils.IPAddressUtil;
 import com.atlassian.renderer.RenderContext;
 import com.atlassian.renderer.v2.RenderMode;
 import com.atlassian.renderer.v2.macro.BaseMacro;
@@ -15,53 +35,31 @@ import com.atlassian.renderer.v2.macro.MacroException;
 import com.atlassian.webresource.api.assembler.PageBuilderService;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
-import org.springframework.beans.factory.annotation.Autowired;
-
-import com.vladsch.flexmark.ext.tables.TablesExtension;
-import com.vladsch.flexmark.ext.gfm.strikethrough.StrikethroughSubscriptExtension;
 import com.vladsch.flexmark.ext.anchorlink.AnchorLinkExtension;
 import com.vladsch.flexmark.ext.autolink.AutolinkExtension;
 import com.vladsch.flexmark.ext.definition.DefinitionExtension;
 import com.vladsch.flexmark.ext.footnotes.FootnoteExtension;
+import com.vladsch.flexmark.ext.gfm.strikethrough.StrikethroughSubscriptExtension;
 import com.vladsch.flexmark.ext.gfm.tasklist.TaskListExtension;
 import com.vladsch.flexmark.ext.ins.InsExtension;
+import com.vladsch.flexmark.ext.superscript.SuperscriptExtension;
+import com.vladsch.flexmark.ext.tables.TablesExtension;
+import com.vladsch.flexmark.ext.toc.TocExtension;
 import com.vladsch.flexmark.ext.wikilink.WikiLinkExtension;
 import com.vladsch.flexmark.ext.youtube.embedded.YouTubeLinkExtension;
-import com.vladsch.flexmark.ext.toc.TocExtension;
-import com.vladsch.flexmark.ext.superscript.SuperscriptExtension;
-import com.vladsch.flexmark.util.ast.Node;
 import com.vladsch.flexmark.html.HtmlRenderer;
 import com.vladsch.flexmark.parser.Parser;
+import com.vladsch.flexmark.util.ast.Node;
 import com.vladsch.flexmark.util.data.MutableDataSet;
 import com.vladsch.flexmark.util.misc.Extension;
 
-import com.atlassian.plugins.confluence.markdown.configuration.MacroConfigModel;
-import static com.atlassian.plugins.confluence.markdown.configuration.PluginAdminGetConfigurationAction.PLUGIN_CONFIG_KEY;
-import com.atlassian.plugins.confluence.markdown.utils.IPAddressUtil;
-
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.UnknownHostException;
-import java.net.HttpURLConnection;
-import java.net.InetAddress;
-import java.nio.file.Path;
-import java.util.Map;
-import java.util.ArrayList;
-import java.util.List;
-
-import java.nio.charset.StandardCharsets;
-
 import org.jsoup.Jsoup;
-import org.jsoup.nodes.*;
-import org.jsoup.select.*;
-
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.select.Elements;
 import org.owasp.html.HtmlPolicyBuilder;
 import org.owasp.html.PolicyFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 
 public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 
@@ -107,20 +105,6 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
         this.xhtmlUtils = xhtmlUtils;
         this.bandanaManager = bandanaManager;
     }
-
-	private void loadMarkdownFromUrlConfigSettings(){
-		MacroConfigModel model = new MacroConfigModel();
-		String config = (String) this.bandanaManager.getValue(context, PLUGIN_CONFIG_KEY);
-		if (config != null) {
-			try {
-				model = objectMapper.readValue(config, MacroConfigModel.class);
-			} catch (IOException e) {
-				throw new RuntimeException(e);
-			}
-		}
-
-		isAzureDevOpsEnabled = model.getConfig().getIsAzureDevOpsEnabled();
-	}
 
     private void initWhitelistConfiguration() throws UnknownHostException {
         MacroConfigModel model = new MacroConfigModel();
@@ -252,16 +236,16 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 				e.printStackTrace();
 			}
 
-			loadMarkdownFromUrlConfigSettings();
+			isAzureDevOpsEnabled = MarkdownHelper.GetMarkdownConfig(bandanaManager, context)
+												 .getIsAzureDevOpsEnabled();
 
 			Boolean linkifyHeaders = Boolean.parseBoolean(parameters.containsKey("LinkifyHeaders") ? parameters.get("LinkifyHeaders") : "true");
 			Boolean useRelativePathsAzureDevOps = isAzureDevOpsEnabled && parameters.containsKey("LinkAzureDevOpsRepository")
-					? !MarkdownRelativePathsDevOpsHelper.isNullOrEmpty(parameters.get("LinkAzureDevOpsRepository"))
+					? !MarkdownHelper.isNullOrEmpty(parameters.get("LinkAzureDevOpsRepository"))
 					: false;
 
 			List<Extension> extensions = new ArrayList<>();
 			extensions.add(TablesExtension.create());
-			extensions.add(StrikethroughSubscriptExtension.create());
 			extensions.add(StrikethroughSubscriptExtension.create());
 			extensions.add(InsExtension.create());
 			extensions.add(TaskListExtension.create());
@@ -271,17 +255,23 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 			extensions.add(SuperscriptExtension.create());
 			extensions.add(YouTubeLinkExtension.create());
 			extensions.add(TocExtension.create());
+		
 			if (linkifyHeaders){
 				extensions.add(AnchorLinkExtension.create());
 				options.set(HtmlRenderer.GENERATE_HEADER_ID, true);
 			}
 
+			if (isAzureDevOpsEnabled){
+				extensions.add(ResizableImageExtension.create());
+			}
+
 			if (useRelativePathsAzureDevOps) {
 				pathToRepository = parameters.get("LinkAzureDevOpsRepository");
-				Path repoPath = MarkdownRelativePathsDevOpsHelper.getPathFromRawMarkdownUrl(importFrom);
+				Path repoPath = MarkdownHelper.getPathFromRawMarkdownUrl(importFrom);
 
 				MarkdownRelativeDevOpsUrls.relativePathDataKey = repoPath.toString();
 				MarkdownRelativeDevOpsUrls.devOpsUrlDataKey = pathToRepository;
+				MarkdownRelativeDevOpsUrls.importFrom = importFrom.toString();
 
 				extensions.add(MarkdownRelativeDevOpsUrls.CustomExtension.create());
 			}
@@ -372,7 +362,7 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 			        	    .allowAttributes("href").onElements("a")
 					        .allowAttributes("align", "class").onElements("table", "tr", "td", "th", "thead", "tbody")
 			        		.allowAttributes("id").onElements("h1", "h2", "h3", "h4", "h5", "h6", "sup", "li")
-			        	    .allowAttributes("alt", "src").onElements("img")
+			        	    .allowAttributes("alt", "src", "width", "height").onElements("img")
 			        	    .allowAttributes("class").onElements("li", "code")
 			        	    .allowAttributes("type", "class", "checked", "disabled", "readonly").onElements("input")
 					        .allowTextIn("table")
