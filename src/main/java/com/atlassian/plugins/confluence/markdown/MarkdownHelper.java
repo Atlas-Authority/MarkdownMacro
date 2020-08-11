@@ -36,12 +36,15 @@ public class MarkdownHelper
     }
 
     public static Path combinePaths(Path mainPath, String relativePathStr){
-        relativePathStr = relativePathStr.substring(2);
+        // if starts with '/', then it is path from repo-root
+        if (relativePathStr.charAt(0) == '/') {
+            return Paths.get(relativePathStr).normalize();
+        }
+
+        // otherwise resolve and normalize
         Path relativePath = Paths.get(relativePathStr);
-
         mainPath = mainPath.getParent();
-
-        return mainPath.resolve(relativePath);
+        return mainPath.resolve(relativePath).normalize();
     }
 
     public static MarkdownConfigModel GetMarkdownConfig(BandanaManager bandanaManager, 
