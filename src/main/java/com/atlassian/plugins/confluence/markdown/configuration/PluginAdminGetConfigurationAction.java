@@ -25,10 +25,6 @@ public class PluginAdminGetConfigurationAction extends ConfluenceActionSupport {
     
     private MacroConfigModel model;
 
-    public PluginAdminGetConfigurationAction(BandanaManager bandanaManager){
-        this.bandanaManager = bandanaManager;
-    }
-
     @Override
     public String doDefault() throws Exception {
         String config = (String) bandanaManager.getValue(context, PLUGIN_CONFIG_KEY);
