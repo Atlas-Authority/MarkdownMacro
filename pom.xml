@@ -26,6 +26,12 @@
     <dependencies>
         
         <dependency>
+            <groupId>com.atlassian</groupId>
+            <artifactId>atlassian-app-cloud-migration-tracker</artifactId>
+            <version>1.22</version>
+        </dependency>
+
+        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <version>4.13.1</version>
