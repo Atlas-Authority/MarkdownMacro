@@ -130,6 +130,7 @@ public class MyPluginComponentImpl implements CloudMigrationListenerV1, Initiali
     @Override
     public Set<AccessScope> getDataAccessScopes() {
         return Stream.of(
+                APP_DATA_OTHER,
                 MIGRATION_TRACING_PRODUCT)
                 .collect(Collectors.toCollection(HashSet::new));
     }
