@@ -1,4 +1,4 @@
-package com.atlassian.plugins.confluence.markdown;
+package com.atlassian.plugins.confluence.markdown.ccma;
 
 import com.atlassian.migration.app.tracker.CloudMigrationAccessor;
 import org.springframework.beans.BeansException;

@@ -1,4 +1,4 @@
-package com.atlassian.plugins.confluence.markdown;
+package com.atlassian.plugins.confluence.markdown.ccma;
 
 import com.atlassian.confluence.content.render.xhtml.DefaultConversionContext;
 import com.atlassian.confluence.pages.Page;
