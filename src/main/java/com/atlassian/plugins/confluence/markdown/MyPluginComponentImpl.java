@@ -78,7 +78,7 @@ public class MyPluginComponentImpl implements CloudMigrationListenerV1, Initiali
                     String cloudPageId = entry.getValue();
 
                     Page page = pageManager.getPage(Long.parseLong(serverPageId));
-                    if (page.isLatestVersion()) {
+                    if (page != null && page.isLatestVersion()) {
                         final Boolean[] hasRelevantMacros = {false};
 
                         String body = page.getBodyAsString();
