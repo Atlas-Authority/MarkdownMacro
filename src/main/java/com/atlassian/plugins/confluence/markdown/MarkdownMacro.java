@@ -154,7 +154,7 @@ public class MarkdownMacro extends BaseMacro implements Macro {
         		.allowStyling()
         		.allowStandardUrlProtocols()
         		.allowElements("a", "table", "tr", "td", "th", "thead", "tbody", "img", "hr", "input", "code", "pre", "dl", "dt", "dd")
-        	    .allowAttributes("href").onElements("a")
+        	    .allowAttributes("href", "title").onElements("a")
 		        .allowAttributes("align", "class").onElements("table", "tr", "td", "th", "thead", "tbody")
         		.allowAttributes("id").onElements("h1", "h2", "h3", "h4", "h5", "h6", "sup", "li")
         	    .allowAttributes("alt", "src", "width", "height").onElements("img")
