@@ -28,7 +28,7 @@
         <dependency>
             <groupId>com.atlassian</groupId>
             <artifactId>atlassian-app-cloud-migration-tracker</artifactId>
-            <version>1.22</version>
+            <version>1.26.1</version>
         </dependency>
 
         <dependency>
