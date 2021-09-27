@@ -6,7 +6,11 @@ import com.atlassian.confluence.pages.PageManager;
 import com.atlassian.confluence.xhtml.api.MacroDefinition;
 import com.atlassian.confluence.xhtml.api.MacroDefinitionHandler;
 import com.atlassian.confluence.xhtml.api.XhtmlContent;
-import com.atlassian.migration.app.tracker.*;
+import com.atlassian.migration.app.AccessScope;
+import com.atlassian.migration.app.PaginatedMapping;
+import com.atlassian.migration.app.gateway.AppCloudMigrationGateway;
+import com.atlassian.migration.app.gateway.MigrationDetailsV1;
+import com.atlassian.migration.app.listener.DiscoverableListener;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ConfluenceImport;
 import com.atlassian.renderer.RenderContext;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -14,8 +18,6 @@ import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.DisposableBean;
-import org.springframework.beans.factory.InitializingBean;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -27,40 +29,28 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static com.atlassian.migration.app.tracker.AccessScope.*;
+import static com.atlassian.migration.app.AccessScope.APP_DATA_OTHER;
+import static com.atlassian.migration.app.AccessScope.MIGRATION_TRACING_PRODUCT;
 
 @Named
-public class MyPluginComponentImpl implements CloudMigrationListenerV1, InitializingBean, DisposableBean {
+public class MyPluginComponentImpl implements DiscoverableListener {
 
     private static final Logger log = LoggerFactory.getLogger(MyPluginComponentImpl.class);
-    private final CloudMigrationAccessor accessor;
     @ConfluenceImport private final PageManager pageManager;
     @ConfluenceImport private final XhtmlContent xhtmlContent;
 
     @Inject
     public MyPluginComponentImpl(
-            LocalCloudMigrationAccessor accessor,
             @ConfluenceImport PageManager pageManager,
             @ConfluenceImport XhtmlContent xhtmlContent)
     {
         // It is not safe to save a direct reference to the gateway as that can change over time
-        this.accessor = accessor.getCloudMigrationAccessor();
         this.pageManager = pageManager;
         this.xhtmlContent = xhtmlContent;
     }
 
     @Override
-    public void afterPropertiesSet() {
-        this.accessor.registerListener(this);
-    }
-
-    @Override
-    public void destroy() {
-        this.accessor.deregisterListener(this);
-    }
-
-    @Override
-    public void onStartAppMigration(String transferId, MigrationDetailsV1 migrationDetails) {
+    public void onStartAppMigration(AppCloudMigrationGateway gateway, String transferId, MigrationDetailsV1 migrationDetails) {
         ObjectMapper objectMapper = new ObjectMapper();
         try {
             ObjectMapper overallMapper = new ObjectMapper();
@@ -68,7 +58,7 @@ public class MyPluginComponentImpl implements CloudMigrationListenerV1, Initiali
 
             ArrayNode cloudPageIdsNode = topLevelNode.putArray("cloudPageIds");
             log.info("Migration context summary: " + objectMapper.writeValueAsString(migrationDetails));
-            PaginatedMapping paginatedMapping = accessor.getCloudMigrationGateway().getPaginatedMapping(transferId, "confluence:page", 5);
+            PaginatedMapping paginatedMapping = gateway.getPaginatedMapping(transferId, "confluence:page", 5);
             while (paginatedMapping.next()) {
                 Map<String, String> mappings = paginatedMapping.getMapping();
                 log.info("mappings = {}", objectMapper.writeValueAsString(mappings));
@@ -98,23 +88,13 @@ public class MyPluginComponentImpl implements CloudMigrationListenerV1, Initiali
                 }
             }
 
-            OutputStream stream = accessor.getCloudMigrationGateway().createAppData(transferId);
+            OutputStream stream = gateway.createAppData(transferId);
             stream.write(overallMapper.writeValueAsString(topLevelNode).getBytes(StandardCharsets.UTF_8));
             stream.close();
 
         } catch (Exception e) {
             log.error("Error while running app migration", e);
         }
-    }
-
-    @Override
-    public void onRegistrationAccepted() {
-
-    }
-
-    @Override
-    public void onRegistrarRemoved() {
-
     }
 
     @Override
