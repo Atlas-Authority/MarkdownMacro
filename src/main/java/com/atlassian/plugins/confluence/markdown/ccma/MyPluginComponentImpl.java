@@ -11,6 +11,7 @@ import com.atlassian.migration.app.PaginatedMapping;
 import com.atlassian.migration.app.gateway.AppCloudMigrationGateway;
 import com.atlassian.migration.app.gateway.MigrationDetailsV1;
 import com.atlassian.migration.app.listener.DiscoverableListener;
+import com.atlassian.plugin.spring.scanner.annotation.export.ExportAsService;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ConfluenceImport;
 import com.atlassian.renderer.RenderContext;
 import org.codehaus.jackson.map.ObjectMapper;
@@ -33,6 +34,7 @@ import static com.atlassian.migration.app.AccessScope.APP_DATA_OTHER;
 import static com.atlassian.migration.app.AccessScope.MIGRATION_TRACING_PRODUCT;
 
 @Named
+@ExportAsService
 public class MyPluginComponentImpl implements DiscoverableListener {
 
     private static final Logger log = LoggerFactory.getLogger(MyPluginComponentImpl.class);

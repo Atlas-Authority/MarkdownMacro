@@ -186,12 +186,14 @@
                     <instructions>
                         <Atlassian-Plugin-Key>${atlassian.plugin.key}</Atlassian-Plugin-Key>
 
-                        <DynamicImport-Package>
-                            com.atlassian.migration.app
-                        </DynamicImport-Package>
+                        <Export-Package>
+                            com.atlassian.migration.app.listener,
+                            com.atlassian.migration.app.gateway,
+                            com.atlassian.migration.app,
+                        </Export-Package>
+
                         <!-- Add package import here -->
                         <Import-Package>
-                            !com.atlassian.migration.app,
                             com.atlassian.*;resolution:="optional",
                             org.springframework.osgi.*;resolution:="optional",
                             org.eclipse.gemini.blueprint.*;resolution:="optional",
@@ -255,7 +257,7 @@
         <confluence.data.version>7.12.1</confluence.data.version>
         <amps.version>8.0.4</amps.version>
         <plugin.testrunner.version>1.1</plugin.testrunner.version>
-        <atlassian.spring.scanner.version>2.2.0</atlassian.spring.scanner.version>
+        <atlassian.spring.scanner.version>2.2.3</atlassian.spring.scanner.version>
     </properties>
     <scm>
         <connection>scm:git:git@bitbucket.org:atlasauthority/markdown-macro-for-confluence.git</connection>
