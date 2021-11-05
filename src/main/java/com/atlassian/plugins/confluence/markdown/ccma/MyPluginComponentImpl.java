@@ -105,6 +105,11 @@ public class MyPluginComponentImpl implements DiscoverableListener {
     }
 
     @Override
+    public String getServerAppKey() {
+        return "com.atlassian.plugins.confluence.markdown.confluence-markdown-macro";
+    }
+
+    @Override
     public Set<AccessScope> getDataAccessScopes() {
         return Stream.of(
                 APP_DATA_OTHER,
