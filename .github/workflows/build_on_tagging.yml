@@ -1,0 +1,121 @@
+name: Build on tagging
+
+on:
+  push:
+    tags:
+      - '*'
+
+jobs:
+  build:
+    name: Build tagged version
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Get tag version
+        id: get_tag_version
+        run: echo ::set-output name=value::${GITHUB_REF/refs\/tags\//}
+        
+      - name: Print tag version
+        run: echo ${{ steps.get_tag_version.outputs.value }}
+        
+      - uses: actions/checkout@v2
+        with:
+          # token: ${{ secrets.GHA_ADMIN }}
+          ref: master
+          fetch-depth: 0
+      
+      - name: Get tagged branch
+        id: get_tagged_branch
+        run: echo "::set-output name=value::$(git branch --contains ${{ steps.get_tag_version.outputs.value }} | tail -1 | sed 's/^[ \t]*//;s/[ \t]*$//')"
+          
+      - name: Fail if tagged branch is not master
+        run: |
+          echo "Tagged branch ${{ steps.get_tagged_branch.outputs.value }} is not master branch. Exit now!
+          exit -1
+        if: contains(fromJSON('["master", "* master"]'), steps.get_tagged_branch.outputs.value) == 'true'
+        
+      - name: Install Atlas-SDK
+        id: install_atlas_sdk
+        run: |
+          sudo sh -c 'echo "deb https://packages.atlassian.com/debian/atlassian-sdk-deb/ stable contrib" >> /etc/apt/sources.list'
+          wget https://packages.atlassian.com/api/gpg/key/public
+          sudo apt-key add public
+          sudo apt-get update
+          sudo apt-get install atlassian-plugin-sdk
+          atlas-version
+        shell: bash
+
+      - name: Install Java and Maven
+        uses: actions/setup-java@v2
+        with:
+          distribution: 'adopt'
+          java-version: '8'
+          
+      - name: Get current version
+        id: get_current_version
+        run: echo "::set-output name=value::$(atlas-mvn help:evaluate -Dexpression=project.version -q -DforceStdout | grep -v '\[' | tail -1)"
+        
+      - name: Print current version
+        run: echo ${{ steps.get_current_version.outputs.value }}
+        
+      - name: Check if version changed
+        id: version_changed
+        run: echo "::set-output name=value::${{ steps.get_tag_version.outputs.value != steps.get_current_version.outputs.value }}"
+        
+      - name: Print version changed
+        run: echo ${{ steps.version_changed.outputs.value }}
+        
+      - name: Checkout tag commit
+        run: git checkout ${{ steps.get_tag_version.outputs.value }}
+
+      - name: Update version in pom.xml if does not match with the tag
+        run: atlas-mvn -B versions:set -DnewVersion=${{ steps.get_tag_version.outputs.value }} -DgenerateBackupPoms=false
+        if: steps.version_changed.outputs.value == 'true'
+
+      - name: Packaging
+        run: atlas-mvn package
+        
+      - name: Archive for download
+        uses: actions/upload-artifact@v2
+        with:
+          name: ${{ steps.get_tag_version.outputs.value }}
+          path: target/*.jar
+          
+      - name: Checkout master branch
+        run: |
+          git stash
+          git checkout master
+        if: steps.version_changed.outputs.value == 'true'
+        
+      - name: Get head tag
+        id: get_head_tag
+        run: echo "::set-output name=value::$(git tag --points-at HEAD || tail -1)"
+        if: steps.version_changed.outputs.value == 'true'
+      
+      - name: Print head tag
+        run: echo ${{ steps.get_head_tag.outputs.value }}
+        
+      - name: Check if the new tag is at head
+        id: tag_at_head
+        run: echo "::set-output name=value::${{ steps.get_tag_version.outputs.value == steps.get_head_tag.outputs.value }}"
+        
+      - name: Print is new tag at head
+        run: echo ${{ steps.tag_at_head.outputs.value }}
+        
+      - name: Check if should bump version
+        id: should_bump_version
+        run: echo "::set-output name=value::${{ steps.version_changed.outputs.value == 'true' && steps.tag_at_head.outputs.value == 'true' }}"
+        
+      - name: Print should bump version
+        run: echo ${{ steps.should_bump_version.outputs.value }}
+
+      # This is a side effect action, let do it last
+      - name: Commit the changes to pom.xml
+        run: |
+          git stash apply
+          git config --global user.name "DevOps"
+          git config --global user.email "devops@atlasauthority.com"
+          git add pom.xml
+          git commit -m "Bumped version to ${{ steps.get_tag_version.outputs.value }}"
+          git push
+        if: steps.should_bump_version.outputs.value == 'true'
