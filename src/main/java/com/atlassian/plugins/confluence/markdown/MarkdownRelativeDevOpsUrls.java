@@ -9,6 +9,7 @@ import com.atlassian.plugins.confluence.markdown.ext.DevOpsResizableImage.Resiza
 import com.vladsch.flexmark.ast.Image;
 import com.vladsch.flexmark.ast.Link;
 import com.vladsch.flexmark.ast.Reference;
+import com.vladsch.flexmark.ext.footnotes.Footnote;
 import com.vladsch.flexmark.ext.jekyll.tag.JekyllTag;
 import com.vladsch.flexmark.html.HtmlRenderer;
 import com.vladsch.flexmark.html.HtmlRenderer.Builder;
@@ -53,7 +54,7 @@ public class MarkdownRelativeDevOpsUrls {
                 @NotNull ResolvedLink link) {
             try
             {
-                if (node instanceof Link || node instanceof Reference || node instanceof JekyllTag) {
+                if (node instanceof Link || node instanceof Reference || node instanceof JekyllTag || node instanceof Footnote) {
                     return resolveLinkInternal(devOpsUrl.toString(), link);
                 }
                 if (node instanceof Image || node instanceof ResizableImage) {
