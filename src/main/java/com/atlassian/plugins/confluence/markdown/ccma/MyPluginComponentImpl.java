@@ -1,13 +1,15 @@
 package com.atlassian.plugins.confluence.markdown.ccma;
 
-import com.atlassian.confluence.api.model.content.Content;
-import com.atlassian.confluence.api.model.content.ContentBody;
-import com.atlassian.confluence.api.model.content.ContentRepresentation;
-import com.atlassian.confluence.api.model.content.ContentType;
+import com.atlassian.confluence.api.model.content.*;
 import com.atlassian.confluence.api.model.content.id.ContentId;
+import com.atlassian.confluence.api.model.people.SubjectType;
+import com.atlassian.confluence.api.model.people.User;
+import com.atlassian.confluence.api.model.permissions.OperationKey;
 import com.atlassian.confluence.api.service.content.ContentService;
-import com.atlassian.confluence.content.render.xhtml.DefaultConversionContext;
 import com.atlassian.confluence.rest.api.model.ExpansionsParser;
+import com.atlassian.confluence.security.SpacePermission;
+import com.atlassian.confluence.spaces.Space;
+import com.atlassian.confluence.spaces.SpaceManager;
 import com.atlassian.confluence.user.AuthenticatedUserThreadLocal;
 import com.atlassian.confluence.user.ConfluenceUser;
 import com.atlassian.confluence.user.UserAccessor;
@@ -19,7 +21,7 @@ import com.atlassian.migration.app.gateway.MigrationDetailsV1;
 import com.atlassian.migration.app.listener.DiscoverableListener;
 import com.atlassian.plugin.spring.scanner.annotation.export.ExportAsService;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ConfluenceImport;
-import com.atlassian.renderer.RenderContext;
+import com.atlassian.sal.api.user.UserKey;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
@@ -31,32 +33,38 @@ import javax.inject.Named;
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
-import static com.atlassian.migration.app.AccessScope.APP_DATA_OTHER;
-import static com.atlassian.migration.app.AccessScope.MIGRATION_TRACING_PRODUCT;
+import static com.atlassian.migration.app.AccessScope.*;
 
 @Named
 @ExportAsService
 public class MyPluginComponentImpl implements DiscoverableListener {
 
     private static final Logger log = LoggerFactory.getLogger(MyPluginComponentImpl.class);
+    private static final String USER_MAPPING_PREFIX = "confluence.userkey/";
+    private static final int BATCH_SIZE = 5;
+
+    @ConfluenceImport private final SpaceManager spaceManager;
     @ConfluenceImport private final ContentService contentService;
     @ConfluenceImport private final UserAccessor userAccessor;
-    @ConfluenceImport private final XhtmlContent xhtmlContent;
+    private final PageFilter pageFilter;
 
     @Inject
     public MyPluginComponentImpl(
+            @ConfluenceImport SpaceManager spaceManager,
             @ConfluenceImport ContentService contentService,
             @ConfluenceImport UserAccessor userAccessor,
             @ConfluenceImport XhtmlContent xhtmlContent)
     {
         // It is not safe to save a direct reference to the gateway as that can change over time
+        this.spaceManager = spaceManager;
         this.contentService = contentService;
         this.userAccessor = userAccessor;
-        this.xhtmlContent = xhtmlContent;
+        this.pageFilter = new PageFilter(xhtmlContent);
     }
 
     @Override
@@ -68,30 +76,43 @@ public class MyPluginComponentImpl implements DiscoverableListener {
             }
 
             ObjectMapper objectMapper = new ObjectMapper();
+            log.info("Migration context summary: " + objectMapper.writeValueAsString(migrationDetails));
+
+            final Map<String, String> userMap = getUserMap(gateway, transferId);
+
+            final List<PageData> pageDataList = getPageDataList(gateway, transferId);
+
+            final Set<Long> spaceIds = pageDataList
+                    .stream()
+                    .map(PageData::getServerSpaceId)
+                    .collect(Collectors.toSet());
+
+            final Map<Long, Set<UserKey>> spaceUsersById = getSpacePermissions(spaceIds);
+
             ObjectMapper overallMapper = new ObjectMapper();
             ObjectNode topLevelNode = overallMapper.createObjectNode();
+            ArrayNode pagesNode = topLevelNode.putArray("pages");
 
-            ArrayNode cloudPageIdsNode = topLevelNode.putArray("cloudPageIds");
-            log.info("Migration context summary: " + objectMapper.writeValueAsString(migrationDetails));
-            PaginatedMapping paginatedMapping = gateway.getPaginatedMapping(transferId, "confluence:page", 5);
-            while (paginatedMapping.next()) {
-                Map<String, String> mappings = paginatedMapping.getMapping();
-                log.info("mappings = {}", objectMapper.writeValueAsString(mappings));
-
-                for (Map.Entry<String, String> entry : mappings.entrySet()) {
-                    String serverPageId = entry.getKey();
-                    String cloudPageId = entry.getValue();
-
-                    final Optional<String> pageBodyOpt = getLatestPageBody(Long.parseLong(serverPageId));
-
-                    if (pageBodyOpt.isPresent()) {
-                        xhtmlContent.handleMacroDefinitions(pageBodyOpt.get(), new DefaultConversionContext(new RenderContext()), macroDefinition -> {
-                            if ("markdown-from-url".equals(macroDefinition.getName())) {
-                                cloudPageIdsNode.add(cloudPageId);
-                            }
-                        });
-                    }
+            for (PageData pageData: pageDataList) {
+                Optional<UserKey> userKeyOpt;
+                final Set<UserKey> pageRestrictedUsers = pageData.getRestrictedUserKeys();
+                if (!pageRestrictedUsers.isEmpty()) {
+                    userKeyOpt = pageRestrictedUsers.stream().findAny();
+                } else {
+                    final long spaceId = pageData.getServerSpaceId();
+                    final Set<UserKey> spaceUsers = spaceUsersById.getOrDefault(spaceId, Collections.emptySet());
+                    userKeyOpt = spaceUsers.stream().findAny();
                 }
+
+                final String userCloudKey = userKeyOpt
+                        .map(UserKey::getStringValue)
+                        .map(USER_MAPPING_PREFIX::concat)
+                        .map(userMap::get)
+                        .orElse(null);
+
+                final ObjectNode page = pagesNode.addObject();
+                page.put("pageId", pageData.getCloudId());
+                page.put("accountId", userCloudKey);
             }
 
             stream.write(overallMapper.writeValueAsString(topLevelNode).getBytes(StandardCharsets.UTF_8));
@@ -115,17 +136,82 @@ public class MyPluginComponentImpl implements DiscoverableListener {
         return adminUser.isPresent();
     }
 
-    private Optional<String> getLatestPageBody(Long pageId) {
+    private List<PageData> getPageDataList(AppCloudMigrationGateway gateway, String transferId) {
+        PaginatedMapping paginatedMapping = gateway.getPaginatedMapping(transferId, "confluence:page", BATCH_SIZE);
+        final List<PageData> pageDataList = new ArrayList<>();
+        while (paginatedMapping.next()) {
+            Map<String, String> mappings = paginatedMapping.getMapping();
+            for (Map.Entry<String, String> entry : mappings.entrySet()) {
+                String serverPageId = entry.getKey();
+                String cloudPageId = entry.getValue();
+                getLatestPageData(serverPageId, cloudPageId).ifPresent(pageDataList::add);
+            }
+        }
+        return Collections.unmodifiableList(pageDataList);
+    }
+
+    private Optional<PageData> getLatestPageData(String serverPageId, String cloudPageId) {
         final Optional<Content> pageOpt = contentService
-                .find(ExpansionsParser.parse("history,body.storage"))
+                .find(ExpansionsParser.parse("history,body.storage,space,restrictions.update.restrictions.user"))
                 .withType(ContentType.PAGE)
-                .withId(ContentId.of(pageId))
+                .withId(ContentId.of(Long.parseLong(serverPageId)))
                 .fetch();
         return pageOpt
                 .filter(page -> page.getHistory().isLatest())
-                .map(Content::getBody)
-                .map(page -> page.get(ContentRepresentation.STORAGE))
-                .map(ContentBody::getValue);
+                .map(page -> {
+                    final Set<UserKey> restrictedUserKeys = page
+                            .getRestrictions()
+                            .get(OperationKey.UPDATE)
+                            .getRestrictions()
+                            .get(SubjectType.USER)
+                            .getResults()
+                            .stream()
+                            .map(subject -> (User) subject)
+                            .flatMap(user -> user.optionalUserKey().map(Stream::of).orElseGet(Stream::empty))
+                            .collect(Collectors.toSet());
+                    return new PageData(
+                            cloudPageId,
+                            page.getSpace().getId(),
+                            page.getBody().get(ContentRepresentation.STORAGE).getValue(),
+                            restrictedUserKeys
+                    );
+                })
+                .filter(pageData -> pageFilter.hasMarkdownMacroFromUrl(pageData.getBody()));
+    }
+
+    private Map<Long, Set<UserKey>> getSpacePermissions(Set<Long> spaceIds) {
+        return spaceIds.stream().collect(Collectors.toMap(Function.identity(), this::getEditSpaceUsers));
+    }
+
+    private Set<UserKey> getEditSpaceUsers(long spaceId) {
+        final Space space = spaceManager.getSpace(spaceId);
+        if (space == null) {
+            return Collections.emptySet();
+        }
+        final Set<UserKey> userKeys = space.getPermissions().stream()
+                .filter(SpacePermission::isUserPermission)
+                .filter(perm -> SpacePermission.CREATEEDIT_PAGE_PERMISSION.equalsIgnoreCase(perm.getType()))
+                .map(SpacePermission::getUserSubject)
+                .filter(Objects::nonNull)
+                .map(ConfluenceUser::getKey)
+                .collect(Collectors.toSet());
+        return Collections.unmodifiableSet(userKeys);
+    }
+
+    private Map<String, String> getUserMap(AppCloudMigrationGateway gateway, String transferId) {
+        final PaginatedMapping paginatedMapping = gateway.getPaginatedMapping(transferId, "identity:user", BATCH_SIZE);
+        final Map<String, String> results = new HashMap<>();
+        while (paginatedMapping.next()) {
+            final Map<String, String> mappings = paginatedMapping.getMapping();
+            for (Map.Entry<String, String> entry : mappings.entrySet()) {
+                String serverUserKey = entry.getKey();
+                String cloudUserKey = entry.getValue();
+                if (serverUserKey.startsWith(USER_MAPPING_PREFIX)) {
+                    results.put(serverUserKey, cloudUserKey);
+                }
+            }
+        }
+        return Collections.unmodifiableMap(results);
     }
 
     @Override
@@ -140,9 +226,10 @@ public class MyPluginComponentImpl implements DiscoverableListener {
 
     @Override
     public Set<AccessScope> getDataAccessScopes() {
-        return Stream.of(
-                APP_DATA_OTHER,
-                MIGRATION_TRACING_PRODUCT)
-                .collect(Collectors.toCollection(HashSet::new));
+        final Set<AccessScope> accessScopes = new HashSet<>();
+        accessScopes.add(APP_DATA_OTHER);
+        accessScopes.add(MIGRATION_TRACING_PRODUCT);
+        accessScopes.add(MIGRATION_TRACING_IDENTITY);
+        return Collections.unmodifiableSet(accessScopes);
     }
 }
