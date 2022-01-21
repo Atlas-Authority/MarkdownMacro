@@ -3,6 +3,7 @@ package com.atlassian.plugins.confluence.markdown.ccma;
 import com.atlassian.confluence.api.model.content.*;
 import com.atlassian.confluence.api.model.content.id.ContentId;
 import com.atlassian.confluence.api.model.pagination.PageResponse;
+import com.atlassian.confluence.api.model.people.Subject;
 import com.atlassian.confluence.api.model.people.SubjectType;
 import com.atlassian.confluence.api.model.people.User;
 import com.atlassian.confluence.api.model.permissions.ContentRestriction;
@@ -38,7 +39,6 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
 import static com.atlassian.migration.app.AccessScope.*;
@@ -81,7 +81,7 @@ public class MyPluginComponentImpl implements DiscoverableListener {
                 throw new RuntimeException("Please make sure confluence-administrators has at least 1 user");
             }
 
-            ObjectMapper objectMapper = new ObjectMapper();
+            final ObjectMapper objectMapper = new ObjectMapper();
             log.info("Migration context summary: " + objectMapper.writeValueAsString(migrationDetails));
 
             final Map<String, String> userMap = getUserMap(gateway, transferId);
@@ -100,36 +100,23 @@ public class MyPluginComponentImpl implements DiscoverableListener {
 
             final ArrayNode pagesNode = topLevelNode.putArray("pages");
             for (PageData pageData: pageDataList) {
-                Optional<UserKey> userKeyOpt;
-                final Set<UserKey> pageRestrictedUsers = pageData.getRestrictedUserKeys();
-                if (!pageRestrictedUsers.isEmpty()) {
-                    userKeyOpt = pageRestrictedUsers.stream().findAny();
-                } else {
-                    final long spaceId = pageData.getServerSpaceId();
-                    userKeyOpt = spaceUsersById
-                            .getOrDefault(spaceId, Collections.emptySet())
-                            .stream()
-                            .findAny();
-                }
-
-                final String userCloudKey = userKeyOpt
-                        .map(UserKey::getStringValue)
-                        .map(USER_MAPPING_PREFIX::concat)
-                        .map(userMap::get)
-                        .orElse(null);
-
                 final ObjectNode page = pagesNode.addObject();
+                final String userCloudKey = pickUserWhoHasEditPerm(pageData, spaceUsersById, userMap);
                 page.put("pageId", pageData.getCloudId());
                 page.put("accountId", userCloudKey);
             }
 
             topLevelNode.put("serverAppVersion", serverAppVersion);
+
             stream.write(overallMapper.writeValueAsString(topLevelNode).getBytes(StandardCharsets.UTF_8));
         } catch (Exception e) {
             log.error("Error while running app migration", e);
         }
     }
 
+    /**
+     * Authenticate a random admin user to enable Confluence service APIs.
+     */
     private boolean setupAdminUser() {
         final Optional<ConfluenceUser> adminUser = Optional
                 .ofNullable(userAccessor.getGroup("confluence-administrators"))
@@ -145,6 +132,9 @@ public class MyPluginComponentImpl implements DiscoverableListener {
         return adminUser.isPresent();
     }
 
+    /**
+     * Collect data of all pages which need to migrate.
+     */
     private List<PageData> getPageDataList(AppCloudMigrationGateway gateway, String transferId) {
         PaginatedMapping paginatedMapping = gateway.getPaginatedMapping(transferId, "confluence:page", BATCH_SIZE);
         final List<PageData> pageDataList = new ArrayList<>();
@@ -159,39 +149,108 @@ public class MyPluginComponentImpl implements DiscoverableListener {
         return Collections.unmodifiableList(pageDataList);
     }
 
+    /**
+     * Check if a server page is latest and needs migrate.
+     */
     private Optional<PageData> getLatestPageData(String serverPageId, String cloudPageId) {
         final Optional<Content> pageOpt = contentService
                 .find(ExpansionsParser.parse("history,body.storage,space,restrictions.update.restrictions.user"))
                 .withType(ContentType.PAGE)
                 .withId(ContentId.of(Long.parseLong(serverPageId)))
                 .fetch();
+
         return pageOpt
-                .filter(page -> page.getHistory().isLatest())
+                .filter(this::isLatestVersion)
+                .filter(this::hasMarkdownMarcoFromUrl)
                 .map(page -> {
-                    final Set<UserKey> restrictedUserKeys = page
-                            .getRestrictions()
-                            .get(OperationKey.UPDATE)
-                            .getRestrictions()
-                            .get(SubjectType.USER)
-                            .getResults()
+                    final List<Subject> restrictedUsers = Optional.ofNullable(page.getRestrictions())
+                            .map(restrictions -> restrictions.get(OperationKey.UPDATE))
+                            .map(ContentRestriction::getRestrictions)
+                            .map(restrictions -> restrictions.get(SubjectType.USER))
+                            .map(PageResponse::getResults)
+                            .orElse(Collections.emptyList());
+
+                    final Set<UserKey> restrictedUserKeys = restrictedUsers
                             .stream()
                             .map(subject -> (User) subject)
-                            .flatMap(user -> user.optionalUserKey().map(Stream::of).orElseGet(Stream::empty))
+                            .map(User::optionalUserKey)
+                            .filter(Optional::isPresent)
+                            .map(Optional::get)
                             .collect(Collectors.toSet());
+
                     return new PageData(
                             cloudPageId,
                             page.getSpace().getId(),
                             page.getBody().get(ContentRepresentation.STORAGE).getValue(),
                             restrictedUserKeys
                     );
-                })
-                .filter(pageData -> pageFilter.hasMarkdownMacroFromUrl(pageData.getBody()));
+                });
     }
 
+    private boolean isLatestVersion(Content page) {
+        return Optional
+                .ofNullable(page.getHistory())
+                .map(History::isLatest)
+                .orElse(false);
+    }
+
+    /**
+     * Check if the page contains Markdown macro from URL.
+     * Only markdown macros from URL need to migrate.
+     */
+    private boolean hasMarkdownMarcoFromUrl(Content page) {
+        return Optional
+                .ofNullable(page.getBody())
+                .map(contentMap -> contentMap.get(ContentRepresentation.STORAGE))
+                .map(ContentBody::getValue)
+                .filter(pageFilter::hasMarkdownMacroFromUrl)
+                .isPresent();
+    }
+
+    /**
+     * Pick a user who has edit permission on page.
+     *
+     * Return null if the permission is not controlled at user level:
+     * <li>Space is public and allows anonymous access (global space permission) OR</li>
+     * <li>Space permissions are controlled at group level. In this case, since cloud app has
+     * READ and WRITE scope so it totally has access to space content.</li>
+     */
+    private String pickUserWhoHasEditPerm(
+            PageData pageData,
+            Map<Long, Set<UserKey>> spaceUsersById,
+            Map<String, String> userMap
+    ) {
+        Optional<UserKey> userKeyOpt;
+        final Set<UserKey> pageRestrictedUsers = pageData.getRestrictedUserKeys();
+        if (!pageRestrictedUsers.isEmpty()) {
+            // if this page has update restriction config then pick user from it
+            userKeyOpt = pageRestrictedUsers.stream().findAny();
+        } else {
+            // otherwise pick a user at space level
+            final long spaceId = pageData.getServerSpaceId();
+            userKeyOpt = spaceUsersById
+                    .getOrDefault(spaceId, Collections.emptySet())
+                    .stream()
+                    .findAny();
+        }
+
+        return userKeyOpt
+                .map(UserKey::getStringValue)
+                .map(USER_MAPPING_PREFIX::concat)
+                .map(userMap::get)
+                .orElse(null);
+    }
+
+    /**
+     * Mapping from space server id to a set of users who has edit permission on that space.
+     */
     private Map<Long, Set<UserKey>> getSpacePermissions(Set<Long> spaceIds) {
         return spaceIds.stream().collect(Collectors.toMap(Function.identity(), this::getEditSpaceUsers));
     }
 
+    /**
+     * Get server users who has edit permission on space
+     */
     private Set<UserKey> getEditSpaceUsers(long spaceId) {
         final Space space = spaceManager.getSpace(spaceId);
         if (space == null) {
@@ -207,6 +266,9 @@ public class MyPluginComponentImpl implements DiscoverableListener {
         return Collections.unmodifiableSet(userKeys);
     }
 
+    /**
+     * User mapping from server id to cloud id.
+     */
     private Map<String, String> getUserMap(AppCloudMigrationGateway gateway, String transferId) {
         final PaginatedMapping paginatedMapping = gateway.getPaginatedMapping(transferId, "identity:user", BATCH_SIZE);
         final Map<String, String> results = new HashMap<>();
