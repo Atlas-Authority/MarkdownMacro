@@ -1,21 +1,18 @@
 package com.atlassian.plugins.confluence.markdown.ccma;
 
+import com.atlassian.confluence.api.model.content.Content;
 import com.atlassian.sal.api.user.UserKey;
 
 import java.util.Set;
 
 class PageData {
+    private final String serverId;
     private final String cloudId;
     private final long serverSpaceId;
-    private final String body;
-    private final Set<UserKey> restrictedUserKeys;
+    private final Content page;
 
-
-    public PageData(String cloudId, long serverSpaceId, String body, Set<UserKey> restrictedUserKeys) {
-        this.cloudId = cloudId;
-        this.serverSpaceId = serverSpaceId;
-        this.body = body;
-        this.restrictedUserKeys = restrictedUserKeys;
+    public String getServerId() {
+        return serverId;
     }
 
     public String getCloudId() {
@@ -26,11 +23,14 @@ class PageData {
         return serverSpaceId;
     }
 
-    public String getBody() {
-        return body;
+    public Content getPage() {
+        return page;
     }
 
-    public Set<UserKey> getRestrictedUserKeys() {
-        return restrictedUserKeys;
+    public PageData(String serverId, String cloudId, long serverSpaceId, Content page) {
+        this.serverId = serverId;
+        this.cloudId = cloudId;
+        this.serverSpaceId = serverSpaceId;
+        this.page = page;
     }
 }
