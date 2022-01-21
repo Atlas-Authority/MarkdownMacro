@@ -248,6 +248,15 @@
                 </configuration>
             </plugin>
         </plugins>
+        <resources>
+            <resource>
+                <filtering>true</filtering>
+                <directory>src/main/resources</directory>
+                <includes>
+                    <include>confluence-markdown-macro.properties</include>
+                </includes>
+            </resource>
+        </resources>
     </build>
     <properties>
         <java.source.version>1.8</java.source.version>

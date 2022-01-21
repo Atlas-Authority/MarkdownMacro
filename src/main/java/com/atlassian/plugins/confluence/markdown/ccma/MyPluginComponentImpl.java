@@ -2,8 +2,10 @@ package com.atlassian.plugins.confluence.markdown.ccma;
 
 import com.atlassian.confluence.api.model.content.*;
 import com.atlassian.confluence.api.model.content.id.ContentId;
+import com.atlassian.confluence.api.model.pagination.PageResponse;
 import com.atlassian.confluence.api.model.people.SubjectType;
 import com.atlassian.confluence.api.model.people.User;
+import com.atlassian.confluence.api.model.permissions.ContentRestriction;
 import com.atlassian.confluence.api.model.permissions.OperationKey;
 import com.atlassian.confluence.api.service.content.ContentService;
 import com.atlassian.confluence.rest.api.model.ExpansionsParser;
@@ -27,6 +29,7 @@ import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -52,19 +55,22 @@ public class MyPluginComponentImpl implements DiscoverableListener {
     @ConfluenceImport private final ContentService contentService;
     @ConfluenceImport private final UserAccessor userAccessor;
     private final PageFilter pageFilter;
+    private final String serverAppVersion;
 
     @Inject
     public MyPluginComponentImpl(
+            @Value("${build.version}") String serverAppVersion,
             @ConfluenceImport SpaceManager spaceManager,
             @ConfluenceImport ContentService contentService,
             @ConfluenceImport UserAccessor userAccessor,
-            @ConfluenceImport XhtmlContent xhtmlContent)
-    {
+            @ConfluenceImport XhtmlContent xhtmlContent
+    ) {
         // It is not safe to save a direct reference to the gateway as that can change over time
         this.spaceManager = spaceManager;
         this.contentService = contentService;
         this.userAccessor = userAccessor;
         this.pageFilter = new PageFilter(xhtmlContent);
+        this.serverAppVersion = serverAppVersion;
     }
 
     @Override
@@ -89,10 +95,10 @@ public class MyPluginComponentImpl implements DiscoverableListener {
 
             final Map<Long, Set<UserKey>> spaceUsersById = getSpacePermissions(spaceIds);
 
-            ObjectMapper overallMapper = new ObjectMapper();
-            ObjectNode topLevelNode = overallMapper.createObjectNode();
-            ArrayNode pagesNode = topLevelNode.putArray("pages");
+            final ObjectMapper overallMapper = new ObjectMapper();
+            final ObjectNode topLevelNode = overallMapper.createObjectNode();
 
+            final ArrayNode pagesNode = topLevelNode.putArray("pages");
             for (PageData pageData: pageDataList) {
                 Optional<UserKey> userKeyOpt;
                 final Set<UserKey> pageRestrictedUsers = pageData.getRestrictedUserKeys();
@@ -100,8 +106,10 @@ public class MyPluginComponentImpl implements DiscoverableListener {
                     userKeyOpt = pageRestrictedUsers.stream().findAny();
                 } else {
                     final long spaceId = pageData.getServerSpaceId();
-                    final Set<UserKey> spaceUsers = spaceUsersById.getOrDefault(spaceId, Collections.emptySet());
-                    userKeyOpt = spaceUsers.stream().findAny();
+                    userKeyOpt = spaceUsersById
+                            .getOrDefault(spaceId, Collections.emptySet())
+                            .stream()
+                            .findAny();
                 }
 
                 final String userCloudKey = userKeyOpt
@@ -115,6 +123,7 @@ public class MyPluginComponentImpl implements DiscoverableListener {
                 page.put("accountId", userCloudKey);
             }
 
+            topLevelNode.put("serverAppVersion", serverAppVersion);
             stream.write(overallMapper.writeValueAsString(topLevelNode).getBytes(StandardCharsets.UTF_8));
         } catch (Exception e) {
             log.error("Error while running app migration", e);
