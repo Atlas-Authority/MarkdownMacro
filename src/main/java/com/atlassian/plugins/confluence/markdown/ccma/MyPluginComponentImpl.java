@@ -7,7 +7,6 @@ import com.atlassian.confluence.rest.api.model.ExpansionsParser;
 import com.atlassian.confluence.user.AuthenticatedUserThreadLocal;
 import com.atlassian.confluence.user.ConfluenceUser;
 import com.atlassian.confluence.user.UserAccessor;
-import com.atlassian.confluence.xhtml.api.XhtmlContent;
 import com.atlassian.migration.app.AccessScope;
 import com.atlassian.migration.app.PaginatedMapping;
 import com.atlassian.migration.app.gateway.AppCloudMigrationGateway;
@@ -54,14 +53,14 @@ public class MyPluginComponentImpl implements DiscoverableListener {
             @Value("${build.version}") String serverAppVersion,
             @ConfluenceImport ContentService contentService,
             @ConfluenceImport UserAccessor userAccessor,
-            @ConfluenceImport XhtmlContent xhtmlContent,
+            PageFilter pageFilter,
             SpacePermissionService spacePermissionService,
             PageRestrictionService pageRestrictionService,
             UserService userService
     ) {
         this.contentService = contentService;
         this.userAccessor = userAccessor;
-        this.pageFilter = new PageFilter(xhtmlContent);
+        this.pageFilter = pageFilter;
         this.serverAppVersion = serverAppVersion;
         this.spacePermissionService = spacePermissionService;
         this.pageRestrictionService = pageRestrictionService;
