@@ -252,9 +252,6 @@
             <resource>
                 <filtering>true</filtering>
                 <directory>src/main/resources</directory>
-                <includes>
-                    <include>confluence-markdown-macro.properties</include>
-                </includes>
             </resource>
         </resources>
     </build>
