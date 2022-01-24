@@ -9,34 +9,34 @@ class PageData {
     private final Content page;
     private String cloudUserKey;
 
-    public PageData(String serverId, String cloudId, long serverSpaceId, Content page) {
+    PageData(String serverId, String cloudId, long serverSpaceId, Content page) {
         this.serverId = serverId;
         this.cloudId = cloudId;
         this.serverSpaceId = serverSpaceId;
         this.page = page;
     }
 
-    public String getServerId() {
+    String getServerId() {
         return serverId;
     }
 
-    public String getCloudId() {
+    String getCloudId() {
         return cloudId;
     }
 
-    public long getServerSpaceId() {
+    long getServerSpaceId() {
         return serverSpaceId;
     }
 
-    public Content getPage() {
+    Content getPage() {
         return page;
     }
 
-    public String getCloudUserKey() {
+    String getCloudUserKey() {
         return cloudUserKey;
     }
 
-    public void setCloudUserKey(String cloudUserKey) {
+    void setCloudUserKey(String cloudUserKey) {
         this.cloudUserKey = cloudUserKey;
     }
 }

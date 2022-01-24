@@ -7,8 +7,6 @@ import com.atlassian.confluence.api.model.people.SubjectType;
 import com.atlassian.confluence.api.model.people.User;
 import com.atlassian.confluence.api.model.permissions.ContentRestriction;
 import com.atlassian.confluence.api.model.permissions.OperationKey;
-import com.atlassian.confluence.user.UserAccessor;
-import com.atlassian.plugin.spring.scanner.annotation.imports.ConfluenceImport;
 import com.atlassian.sal.api.user.UserKey;
 
 import javax.inject.Inject;
@@ -20,8 +18,7 @@ import java.util.stream.Collectors;
 class PageRestrictionService extends PermissionService<Content, String> {
 
     @Inject
-    PageRestrictionService(@ConfluenceImport UserAccessor userAccessor) {
-        super(userAccessor);
+    PageRestrictionService() {
     }
 
     @Override

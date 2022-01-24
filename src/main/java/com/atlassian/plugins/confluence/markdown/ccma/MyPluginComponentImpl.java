@@ -133,7 +133,7 @@ public class MyPluginComponentImpl implements DiscoverableListener {
      */
     private Optional<PageData> getLatestPageData(String serverPageId, String cloudPageId) {
         return contentService
-                .find(ExpansionsParser.parse("history,body.storage,space,restrictions.update.restrictions.user"))
+                .find(ExpansionsParser.parse("history,body.storage,space,restrictions.update.restrictions.user,restrictions.update.restrictions.group"))
                 .withType(ContentType.PAGE)
                 .withId(ContentId.of(Long.parseLong(serverPageId)))
                 .fetch()

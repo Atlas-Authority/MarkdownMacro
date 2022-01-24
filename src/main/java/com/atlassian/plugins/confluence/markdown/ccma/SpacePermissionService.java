@@ -4,7 +4,6 @@ import com.atlassian.confluence.security.SpacePermission;
 import com.atlassian.confluence.spaces.Space;
 import com.atlassian.confluence.spaces.SpaceManager;
 import com.atlassian.confluence.user.ConfluenceUser;
-import com.atlassian.confluence.user.UserAccessor;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ConfluenceImport;
 import com.atlassian.sal.api.user.UserKey;
 
@@ -14,16 +13,12 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Named
-public class SpacePermissionService extends PermissionService<Space, Long> {
+class SpacePermissionService extends PermissionService<Space, Long> {
 
     private final SpaceManager spaceManager;
 
     @Inject
-    SpacePermissionService(
-            @ConfluenceImport UserAccessor userAccessor,
-            @ConfluenceImport SpaceManager spaceManager
-    ) {
-        super(userAccessor);
+    SpacePermissionService(@ConfluenceImport SpaceManager spaceManager) {
         this.spaceManager = spaceManager;
     }
 
