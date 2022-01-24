@@ -14,7 +14,6 @@ import com.atlassian.migration.app.gateway.MigrationDetailsV1;
 import com.atlassian.migration.app.listener.DiscoverableListener;
 import com.atlassian.plugin.spring.scanner.annotation.export.ExportAsService;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ConfluenceImport;
-import com.atlassian.sal.api.user.UserKey;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
@@ -44,8 +43,6 @@ public class MyPluginComponentImpl implements DiscoverableListener {
     private final PageFilter pageFilter;
     private final String serverAppVersion;
 
-    private final SpacePermissionService spacePermissionService;
-    private final PageRestrictionService pageRestrictionService;
     private final UserService userService;
 
     @Inject
@@ -54,24 +51,22 @@ public class MyPluginComponentImpl implements DiscoverableListener {
             @ConfluenceImport ContentService contentService,
             @ConfluenceImport UserAccessor userAccessor,
             PageFilter pageFilter,
-            SpacePermissionService spacePermissionService,
-            PageRestrictionService pageRestrictionService,
             UserService userService
     ) {
         this.contentService = contentService;
         this.userAccessor = userAccessor;
         this.pageFilter = pageFilter;
         this.serverAppVersion = serverAppVersion;
-        this.spacePermissionService = spacePermissionService;
-        this.pageRestrictionService = pageRestrictionService;
         this.userService = userService;
     }
 
     @Override
     public void onStartAppMigration(AppCloudMigrationGateway gateway, String transferId, MigrationDetailsV1 migrationDetails) {
         try(final OutputStream stream = gateway.createAppData(transferId)) {
-            final boolean isSetupAdminUserSuccess = setupAdminUser();
-            if (!isSetupAdminUserSuccess) {
+            final Optional<ConfluenceUser> adminUser = pickAdminUser();
+            if (adminUser.isPresent()) {
+                AuthenticatedUserThreadLocal.set(adminUser.get());
+            } else {
                 throw new RuntimeException("Please make sure confluence-administrators has at least 1 user");
             }
 
@@ -79,12 +74,7 @@ public class MyPluginComponentImpl implements DiscoverableListener {
             log.info("Migration context summary: " + objectMapper.writeValueAsString(migrationDetails));
 
             final List<PageData> pageDataList = getPageDataList(gateway, transferId);
-
-            final Map<String, String> userMap = userService.getUserMap(gateway, transferId);
-
-            final Map<Long, Set<UserKey>> spacePermissions = spacePermissionService.getPermissions(pageDataList);
-
-            final Map<String, Set<UserKey>> pageRestrictions = pageRestrictionService.getPermissions(pageDataList);
+            userService.enrichCloudUser(gateway, transferId, pageDataList);
 
             final ObjectMapper overallMapper = new ObjectMapper();
             final ObjectNode topLevelNode = overallMapper.createObjectNode();
@@ -94,18 +84,10 @@ public class MyPluginComponentImpl implements DiscoverableListener {
             final ArrayNode pagesNode = topLevelNode.putArray("pages");
             final ArrayNode cloudPageIdsNode = topLevelNode.putArray("cloudPageId");
             for (PageData pageData: pageDataList) {
-                final ObjectNode page = pagesNode.addObject();
-                final String userCloudKey = userService.pickUserWhoHasEditPerm(
-                        pageData,
-                        spacePermissions,
-                        pageRestrictions,
-                        userMap
-                );
-
                 cloudPageIdsNode.add(pageData.getCloudId());
-
+                final ObjectNode page = pagesNode.addObject();
                 page.put("pageId", pageData.getCloudId());
-                page.put("accountId", userCloudKey);
+                page.put("accountId", pageData.getCloudUserKey());
             }
 
             stream.write(overallMapper.writeValueAsString(topLevelNode).getBytes(StandardCharsets.UTF_8));
@@ -117,8 +99,8 @@ public class MyPluginComponentImpl implements DiscoverableListener {
     /**
      * Authenticate a random admin user to enable Confluence service APIs.
      */
-    private boolean setupAdminUser() {
-        final Optional<ConfluenceUser> adminUser = Optional
+    private Optional<ConfluenceUser> pickAdminUser() {
+        return Optional
                 .ofNullable(userAccessor.getGroup("confluence-administrators"))
                 .flatMap(adminGroup -> StreamSupport.stream(
                         Spliterators.spliteratorUnknownSize(
@@ -127,9 +109,6 @@ public class MyPluginComponentImpl implements DiscoverableListener {
                         ),
                         false
                 ).findFirst());
-        adminUser.ifPresent(AuthenticatedUserThreadLocal::set);
-
-        return adminUser.isPresent();
     }
 
     /**

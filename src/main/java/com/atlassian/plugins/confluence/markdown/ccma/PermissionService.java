@@ -11,6 +11,11 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
+/**
+ * Get all users who has edit permission on wiki objects.
+ * @param <E> The confluence entity (space or page)
+ * @param <K> The confluence entity key type
+ */
 abstract class PermissionService<E, K> {
 
     private final UserAccessor userAccessor;
@@ -19,6 +24,11 @@ abstract class PermissionService<E, K> {
         this.userAccessor = userAccessor;
     }
 
+    /**
+     * For each page, get all users who:
+     * <li>Belong to groups which has edit permission</li>
+     * <li>Are granted edit permission as individual users</li>
+     */
     final Map<K, Set<UserKey>> getPermissions(Collection<PageData> pageDataList) {
         final List<E> entities = convert(pageDataList);
 
@@ -67,11 +77,23 @@ abstract class PermissionService<E, K> {
                 .collect(Collectors.toSet());
     }
 
+    /**
+     * How to retrieve entity key?
+     */
     abstract K key(E entity);
 
+    /**
+     * Get the list of entities where the permission will be extracted from.
+     */
     abstract List<E> convert(Collection<PageData> pageDataList);
 
+    /**
+     * Get all groups which have edit permission on an entity.
+     */
     abstract Set<String> getEditGroups(E entity);
 
+    /**
+     * Get all individual users which have edit permission on an entity.
+     */
     abstract Set<UserKey> getEditUsers(E entity);
 }
