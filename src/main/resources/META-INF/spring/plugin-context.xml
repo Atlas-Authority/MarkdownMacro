@@ -7,4 +7,7 @@
         http://www.atlassian.com/schema/atlassian-scanner/2
         http://www.atlassian.com/schema/atlassian-scanner/2/atlassian-scanner.xsd">
     <atlassian-scanner:scan-indexes/>
+    <bean class="org.springframework.context.support.PropertySourcesPlaceholderConfigurer">
+        <property name="location" value="confluence-markdown-macro.properties"/>
+    </bean>
 </beans>
