@@ -133,7 +133,7 @@ public class MyPluginComponentImpl implements DiscoverableListener {
      */
     private Optional<PageData> getLatestPageData(String serverPageId, String cloudPageId) {
         return contentService
-                .find(ExpansionsParser.parse("history,body.storage,space,restrictions.update.restrictions.user,restrictions.update.restrictions.group"))
+                .find(ExpansionsParser.parse("history,body.storage,space"))
                 .withType(ContentType.PAGE)
                 .withId(ContentId.of(Long.parseLong(serverPageId)))
                 .fetch()
@@ -161,8 +161,6 @@ public class MyPluginComponentImpl implements DiscoverableListener {
                 .filter(pageFilter::hasMarkdownMacroFromUrl)
                 .isPresent();
     }
-
-
 
     @Override
     public String getCloudAppKey() {
