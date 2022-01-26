@@ -132,3 +132,12 @@ jobs:
           git commit -m "Bumped version to ${{ steps.get_tag_version.outputs.value }}"
           git push
         if: steps.should_bump_version.outputs.value == 'true'
+      
+      - name: Bump required version for migration
+        uses: fjogeleit/http-request-action@master
+        with:
+          url: 'https://marketplace.atlassian.com/rest/2/addons/com.atlassian.plugins.confluence.markdown.confluence-markdown-macro/migration'
+          method: 'PATCH'
+          username: 'devops@atlasauthority.com'
+          password: ${{ secrets.MARKETPLACE_TOKEN }}
+        if: steps.should_bump_version.outputs.value == 'true'
