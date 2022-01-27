@@ -140,4 +140,5 @@ jobs:
           method: 'PATCH'
           username: 'devops@atlasauthority.com'
           password: ${{ secrets.MARKETPLACE_TOKEN }}
+          data: '[{ "op": "replace", "path": "/cloudMigrationAssistantCompatibility", "value": "${{ steps.get_tag_version.outputs.value }}" }]'
         if: steps.should_bump_version.outputs.value == 'true'
