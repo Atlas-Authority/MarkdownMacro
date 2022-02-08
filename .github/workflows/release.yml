@@ -138,6 +138,7 @@ jobs:
         with:
           url: 'https://marketplace.atlassian.com/rest/2/addons/com.atlassian.plugins.confluence.markdown.confluence-markdown-macro/migration'
           method: 'PATCH'
+          contentType: 'application/json-patch+json'
           username: 'devops@atlasauthority.com'
           password: ${{ secrets.MARKETPLACE_TOKEN }}
           data: '[{ "op": "replace", "path": "/cloudMigrationAssistantCompatibility", "value": "${{ steps.get_tag_version.outputs.value }}" }]'
