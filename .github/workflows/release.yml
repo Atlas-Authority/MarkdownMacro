@@ -125,6 +125,7 @@ jobs:
       - name: Release to marketplace
         uses: ./.github/actions/marketplace
         with:
+          addonKey: 'com.atlassian.plugins.confluence.markdown.confluence-markdown-macro'
           filePath: target/${{ steps.get_jar_file.outputs.name }}
           fileName: ${{ steps.get_jar_file.outputs.name }}
           version: ${{ steps.get_tag_version.outputs.value }}

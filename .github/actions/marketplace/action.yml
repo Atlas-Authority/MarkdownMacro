@@ -1,6 +1,10 @@
+# This implementation is based on https://developer.atlassian.com/platform/marketplace/listing-an-app-version-using-rest/
 name: 'Release to marketplace'
 description: 'Release new app version to marketplace'
 inputs:
+  addonKey:
+    description: 'Addon key'
+    required: true
   filePath:
     description: 'Path to the jar file'
     required: true
@@ -49,7 +53,7 @@ runs:
 
     - name: Upload to marketplace
       id: mp_upload
-      uses: nhan-nguyen-se/http-request-action@master
+      uses: Atlas-Authority/http-request-action@master
       with:
         url: '${{ steps.mp_base_url.outputs.value }}${{ steps.mp_artifact_endpoint.outputs.value }}?file=${{ inputs.fileName }}'
         method: 'POST'
@@ -81,13 +85,15 @@ runs:
       with:
         pattern: '{addonKey}'
         string: ${{ steps.mp_addon_endpoint_template.outputs.value }}
-        replace-with: 'com.atlassian.plugins.confluence.markdown.confluence-markdown-macro'
+        replace-with: ${{ inputs.addonKey }}
 
     - name: Get marketplace addons info
       id: mp_addon_info
       uses: fjogeleit/http-request-action@master
       with:
         url: '${{ steps.mp_base_url.outputs.value }}${{ steps.mp_addon_endpoint.outputs.replaced }}'
+        username: 'devops@atlasauthority.com'
+        password: ${{ inputs.marketplaceToken }}
         method: 'GET'
 
     - name: Extract marketplace addons version endpoint
@@ -95,7 +101,8 @@ runs:
       run: echo "::set-output name=value::${{ fromJSON(steps.mp_addon_info.outputs.response)._links.versions.href }}"
       shell: bash
 
-    - name: Update marketplace version
+    - name: Create new marketplace version
+      id: 'create_mp_version_res'
       uses: fjogeleit/http-request-action@master
       with:
         url: '${{ steps.mp_base_url.outputs.value }}${{ steps.mp_addon_version_endpoint.outputs.value }}'
@@ -103,9 +110,15 @@ runs:
         contentType: 'application/json'
         username: 'devops@atlasauthority.com'
         password: ${{ inputs.marketplaceToken }}
-        data: '{ "_links": { "artifact": { "href": "${{ steps.mp_upload_endpoint.outputs.value }}" } }, "status": "private", "name": "${{ steps.get_tag_version.outputs.value }}" }'
+        timeout: '30000'
+        data: '{ "_links": { "artifact": { "href": "${{ steps.mp_upload_endpoint.outputs.value }}" } }, "status": "private", "name": "${{ inputs.version }}" }'
+
+    - name: Print app version creation response
+      run: echo ${{ steps.create_mp_version_res.outputs.response }}
+      shell: bash
 
     - name: Bump required version for migration
+      id: 'bump_migration_version_res'
       uses: fjogeleit/http-request-action@master
       with:
         url: '${{ steps.mp_base_url.outputs.value }}${{ steps.mp_addon_endpoint.outputs.replaced }}/migration'
@@ -113,5 +126,9 @@ runs:
         contentType: 'application/json-patch+json'
         username: 'devops@atlasauthority.com'
         password: ${{ inputs.marketplaceToken }}
-        data: '[{ "op": "replace", "path": "/cloudMigrationAssistantCompatibility", "value": "${{ steps.get_tag_version.outputs.value }}" }]'
-      if: steps.should_bump_version.outputs.value == 'true'
+        timeout: '30000'
+        data: '[{ "op": "replace", "path": "/cloudMigrationAssistantCompatibility", "value": "${{ inputs.version }}" }]'
+
+    - name: Print bump migration version response
+      run: echo ${{ steps.bump_migration_version_res.outputs.response }}
+      shell: bash
