@@ -122,6 +122,16 @@ jobs:
       - name: Print should bump version
         run: echo ${{ steps.should_bump_version.outputs.value }}
 
+      - name: Release to marketplace
+        uses: ./.github/actions/marketplace
+        with:
+          addonKey: 'com.atlassian.plugins.confluence.markdown.confluence-markdown-macro'
+          filePath: target/${{ steps.get_jar_file.outputs.name }}
+          fileName: ${{ steps.get_jar_file.outputs.name }}
+          version: ${{ steps.get_tag_version.outputs.value }}
+          marketplaceToken: ${{ secrets.MARKETPLACE_TOKEN }}
+        if: steps.should_bump_version.outputs.value == 'true'
+
       # This is a side effect action, let do it last
       - name: Commit the changes to pom.xml
         run: |
@@ -131,15 +141,4 @@ jobs:
           git add pom.xml
           git commit -m "Bumped version to ${{ steps.get_tag_version.outputs.value }}"
           git push
-        if: steps.should_bump_version.outputs.value == 'true'
-      
-      - name: Bump required version for migration
-        uses: fjogeleit/http-request-action@master
-        with:
-          url: 'https://marketplace.atlassian.com/rest/2/addons/com.atlassian.plugins.confluence.markdown.confluence-markdown-macro/migration'
-          method: 'PATCH'
-          contentType: 'application/json-patch+json'
-          username: 'devops@atlasauthority.com'
-          password: ${{ secrets.MARKETPLACE_TOKEN }}
-          data: '[{ "op": "replace", "path": "/cloudMigrationAssistantCompatibility", "value": "${{ steps.get_tag_version.outputs.value }}" }]'
         if: steps.should_bump_version.outputs.value == 'true'
