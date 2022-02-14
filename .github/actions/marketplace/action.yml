@@ -27,7 +27,7 @@ runs:
 
     - name: Get marketplace info
       id: mp_info
-      uses: fjogeleit/http-request-action@v1.8.2
+      uses: fjogeleit/http-request-action@v1.9.0
       with:
         url: '${{ steps.mp_base_url.outputs.value }}/rest/2'
         method: 'GET'
@@ -41,7 +41,7 @@ runs:
 
     - name: Get marketplace asset info
       id: mp_asset_info
-      uses: fjogeleit/http-request-action@v1.8.2
+      uses: fjogeleit/http-request-action@v1.9.0
       with:
         url: '${{ steps.mp_base_url.outputs.value }}${{ steps.mp_endpoint.outputs.assets }}'
         method: 'GET'
@@ -53,7 +53,7 @@ runs:
 
     - name: Upload to marketplace
       id: mp_upload
-      uses: Atlas-Authority/http-request-action@master
+      uses: fjogeleit/http-request-action@v1.9.0
       with:
         url: '${{ steps.mp_base_url.outputs.value }}${{ steps.mp_artifact_endpoint.outputs.value }}?file=${{ inputs.fileName }}'
         method: 'POST'
@@ -69,7 +69,7 @@ runs:
 
     - name: Get marketplace addons APIs
       id: mp_addon_api
-      uses: fjogeleit/http-request-action@v1.8.2
+      uses: fjogeleit/http-request-action@v1.9.0
       with:
         url: '${{ steps.mp_base_url.outputs.value }}${{ steps.mp_endpoint.outputs.addons }}?limit=0'
         method: 'GET'
@@ -89,7 +89,7 @@ runs:
 
     - name: Get marketplace addons info
       id: mp_addon_info
-      uses: fjogeleit/http-request-action@v1.8.2
+      uses: fjogeleit/http-request-action@v1.9.0
       with:
         url: '${{ steps.mp_base_url.outputs.value }}${{ steps.mp_addon_endpoint.outputs.replaced }}'
         username: 'devops@atlasauthority.com'
@@ -103,7 +103,7 @@ runs:
 
     - name: Create new marketplace version
       id: 'create_mp_version_res'
-      uses: fjogeleit/http-request-action@v1.8.2
+      uses: fjogeleit/http-request-action@v1.9.0
       with:
         url: '${{ steps.mp_base_url.outputs.value }}${{ steps.mp_addon_version_endpoint.outputs.value }}'
         method: 'POST'
@@ -119,7 +119,7 @@ runs:
 
     - name: Bump required version for migration
       id: 'bump_migration_version_res'
-      uses: fjogeleit/http-request-action@v1.8.2
+      uses: fjogeleit/http-request-action@v1.9.0
       with:
         url: '${{ steps.mp_base_url.outputs.value }}${{ steps.mp_addon_endpoint.outputs.replaced }}/migration'
         method: 'PATCH'
