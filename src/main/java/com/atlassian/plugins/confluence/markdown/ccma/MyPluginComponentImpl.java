@@ -23,8 +23,8 @@ import org.springframework.beans.factory.annotation.Value;
 
 import javax.inject.Inject;
 import javax.inject.Named;
+import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.StreamSupport;
 
@@ -62,45 +62,79 @@ public class MyPluginComponentImpl implements DiscoverableListener {
 
     @Override
     public void onStartAppMigration(AppCloudMigrationGateway gateway, String transferId, MigrationDetailsV1 migrationDetails) {
-        try(final OutputStream stream = gateway.createAppData(transferId)) {
-            final ObjectMapper overallMapper = new ObjectMapper();
+        log.info("Markdown macro migration context summary: \n\t{}\n\t{}\n\t{}\n\t{}\n\t{}\n\t{}",
+                "Name: " + migrationDetails.getName(),
+                "Cloud Url: " + migrationDetails.getCloudUrl(),
+                "Migration ID: " + migrationDetails.getMigrationId(),
+                "Migration Scope ID: " + migrationDetails.getMigrationScopeId(),
+                "Client Key: " + migrationDetails.getConfluenceClientKey(),
+                "Created At: " + migrationDetails.getCreatedAt()
+        );
+
+        try {
             byte[] payload;
             try {
-                final Optional<ConfluenceUser> adminUser = pickAdminUser();
-                if (adminUser.isPresent()) {
-                    AuthenticatedUserThreadLocal.set(adminUser.get());
-                } else {
-                    throw new RuntimeException("Please make sure confluence-administrators has at least 1 user");
-                }
-
-                final ObjectMapper objectMapper = new ObjectMapper();
-                log.info("Migration context summary: " + objectMapper.writeValueAsString(migrationDetails));
-
-                final List<PageData> pageDataList = getPageDataList(gateway, transferId);
-                userService.enrichCloudUser(gateway, transferId, pageDataList);
-
-                final ObjectNode topLevelNode = overallMapper.createObjectNode();
-
-                topLevelNode.put("serverAppVersion", serverAppVersion);
-
-                final ArrayNode pagesNode = topLevelNode.putArray("pages");
-                final ArrayNode cloudPageIdsNode = topLevelNode.putArray("cloudPageId");
-                for (PageData pageData: pageDataList) {
-                    cloudPageIdsNode.add(pageData.getCloudId());
-                    final ObjectNode page = pagesNode.addObject();
-                    page.put("pageId", pageData.getCloudId());
-                    page.put("accountId", pageData.getCloudUserKey());
-                }
-                payload = overallMapper.writeValueAsString(topLevelNode).getBytes(StandardCharsets.UTF_8);
+                payload = preparePayload(gateway, transferId);
             } catch (Exception e) {
-                final ObjectNode topLevelNode = overallMapper.createObjectNode();
-                topLevelNode.put("error", "Error while preparing migration payload in server app: " + e.getMessage());
-                payload = overallMapper.writeValueAsString(topLevelNode).getBytes(StandardCharsets.UTF_8);
+                payload = errorPayload(e);
             }
-            stream.write(payload);
+            uploadAppData(gateway, transferId, payload);
+            log.info("Finished migration {}, transfer ID: {}, migrationID: {}",
+                    migrationDetails.getName(),
+                    transferId,
+                    migrationDetails.getMigrationId()
+            );
         } catch (Exception e) {
-            log.error("Error while running app migration", e);
+            log.error("Error while running app migration {}, transfer ID: {}, migrationID: {}",
+                    migrationDetails.getName(),
+                    transferId,
+                    migrationDetails.getMigrationId()
+            );
         }
+    }
+
+    private byte[] preparePayload(AppCloudMigrationGateway gateway, String transferId) throws IOException {
+        log.info("Start preparing migration payload");
+        final Optional<ConfluenceUser> adminUser = pickAdminUser();
+        if (adminUser.isPresent()) {
+            AuthenticatedUserThreadLocal.set(adminUser.get());
+        } else {
+            throw new RuntimeException("Please make sure confluence-administrators has at least 1 user");
+        }
+
+        final List<PageData> pageDataList = getPageDataList(gateway, transferId);
+        userService.enrichCloudUser(gateway, transferId, pageDataList);
+
+        final ObjectMapper objectMapper = new ObjectMapper();
+
+        final ObjectNode topLevelNode = objectMapper.createObjectNode();
+        topLevelNode.put("serverAppVersion", serverAppVersion);
+
+        final ArrayNode pagesNode = topLevelNode.putArray("pages");
+        final ArrayNode cloudPageIdsNode = topLevelNode.putArray("cloudPageId");
+        for (PageData pageData: pageDataList) {
+            cloudPageIdsNode.add(pageData.getCloudId());
+            final ObjectNode page = pagesNode.addObject();
+            page.put("pageId", pageData.getCloudId());
+            page.put("accountId", pageData.getCloudUserKey());
+        }
+
+        log.info("Finished preparing migration payload. Total pages: {}", cloudPageIdsNode.size());
+
+        return objectMapper.writeValueAsBytes(topLevelNode);
+    }
+
+    private byte[] errorPayload(Exception e) throws IOException {
+        final ObjectMapper objectMapper = new ObjectMapper();
+        final ObjectNode topLevelNode = objectMapper.createObjectNode();
+        topLevelNode.put("error", "Error while preparing migration payload in server app: " + e.getMessage());
+        return objectMapper.writeValueAsBytes(topLevelNode);
+    }
+
+    private void uploadAppData(AppCloudMigrationGateway gateway, String transferId, byte[] data) throws IOException {
+        final OutputStream outputStream = gateway.createAppData(transferId);
+        outputStream.write(data);
+        outputStream.close();
     }
 
     /**
