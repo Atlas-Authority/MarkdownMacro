@@ -14,6 +14,8 @@ import com.atlassian.migration.app.gateway.MigrationDetailsV1;
 import com.atlassian.migration.app.listener.DiscoverableListener;
 import com.atlassian.plugin.spring.scanner.annotation.export.ExportAsService;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ConfluenceImport;
+import dev.failsafe.Failsafe;
+import dev.failsafe.RetryPolicy;
 import org.codehaus.jackson.map.ObjectMapper;
 import org.codehaus.jackson.node.ArrayNode;
 import org.codehaus.jackson.node.ObjectNode;
@@ -25,6 +27,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.stream.StreamSupport;
 
@@ -75,8 +78,14 @@ public class MyPluginComponentImpl implements DiscoverableListener {
             byte[] payload;
             try {
                 payload = preparePayload(gateway, transferId);
-            } catch (Exception e) {
-                payload = errorPayload(e);
+            } catch (Exception exception) {
+                log.error("Error while preparing payload for app migration {}, transfer ID: {}, migrationID: {}",
+                        migrationDetails.getName(),
+                        transferId,
+                        migrationDetails.getMigrationId(),
+                        exception
+                );
+                payload = errorPayload(exception);
             }
             uploadAppData(gateway, transferId, payload);
             log.info("Finished migration {}, transfer ID: {}, migrationID: {}",
@@ -84,11 +93,12 @@ public class MyPluginComponentImpl implements DiscoverableListener {
                     transferId,
                     migrationDetails.getMigrationId()
             );
-        } catch (Exception e) {
+        } catch (Exception exception) {
             log.error("Error while running app migration {}, transfer ID: {}, migrationID: {}",
                     migrationDetails.getName(),
                     transferId,
-                    migrationDetails.getMigrationId()
+                    migrationDetails.getMigrationId(),
+                    exception
             );
         }
     }
@@ -132,9 +142,24 @@ public class MyPluginComponentImpl implements DiscoverableListener {
     }
 
     private void uploadAppData(AppCloudMigrationGateway gateway, String transferId, byte[] data) throws IOException {
-        final OutputStream outputStream = gateway.createAppData(transferId);
-        outputStream.write(data);
-        outputStream.close();
+        Failsafe.with(buildRetryPolicy()).run(() -> {
+            final OutputStream outputStream = gateway.createAppData(transferId);
+            outputStream.write(data);
+            outputStream.close();
+        });
+    }
+
+    private RetryPolicy<Object> buildRetryPolicy() {
+        return RetryPolicy.builder()
+                .withMaxRetries(5)
+                .withBackoff(2L, 30L, ChronoUnit.SECONDS)
+                .onFailedAttempt(failure -> {
+                    log.warn("Failed to upload app data. Attempt {}", failure.getAttemptCount(), failure.getLastException());
+                })
+                .onRetriesExceeded(failure -> {
+                    log.error("Retries exceeded", failure.getException());
+                })
+                .build();
     }
 
     /**
