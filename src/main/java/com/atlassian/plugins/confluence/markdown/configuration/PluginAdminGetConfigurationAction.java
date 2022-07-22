@@ -1,5 +1,6 @@
 package com.atlassian.plugins.confluence.markdown.configuration;
 
+import javax.inject.Inject;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -18,12 +19,19 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public class PluginAdminGetConfigurationAction extends ConfluenceActionSupport {
     public static final String PLUGIN_CONFIG_KEY = "markdown-plugin-config-00";
 
-    @ConfluenceImport
-    private BandanaManager bandanaManager;
-    private ConfluenceBandanaContext context = new ConfluenceBandanaContext("markdown-plugin");
-    private ObjectMapper objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    private final BandanaManager bandanaManager;
+
+    private final ConfluenceBandanaContext context = new ConfluenceBandanaContext("markdown-plugin");
+    private final ObjectMapper objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     
     private MacroConfigModel model;
+
+    @Inject
+    public PluginAdminGetConfigurationAction(
+            @ConfluenceImport BandanaManager bandanaManager
+    ) {
+        this.bandanaManager = bandanaManager;
+    }
 
     @Override
     public String doDefault() throws Exception {
@@ -36,10 +44,6 @@ public class PluginAdminGetConfigurationAction extends ConfluenceActionSupport {
             model = new MacroConfigModel();
         }
         return INPUT;
-    }
-
-    public void setBandanaManager(BandanaManager bandanaManager) {
-        this.bandanaManager = bandanaManager;
     }
 
     public String getData() throws JsonProcessingException {
