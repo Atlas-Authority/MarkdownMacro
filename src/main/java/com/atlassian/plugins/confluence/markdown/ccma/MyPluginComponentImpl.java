@@ -38,7 +38,7 @@ import static com.atlassian.migration.app.AccessScope.*;
 public class MyPluginComponentImpl implements DiscoverableListener {
 
     private static final Logger log = LoggerFactory.getLogger(MyPluginComponentImpl.class);
-    private static final int BATCH_SIZE = 5;
+    private static final int BATCH_SIZE = 5000;
 
     private final ContentService contentService;
     private final UserAccessor userAccessor;
