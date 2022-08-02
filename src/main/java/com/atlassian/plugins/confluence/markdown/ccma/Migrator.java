@@ -1,9 +1,6 @@
 package com.atlassian.plugins.confluence.markdown.ccma;
 
 import com.atlassian.confluence.api.model.content.*;
-import com.atlassian.confluence.api.model.pagination.PageRequest;
-import com.atlassian.confluence.api.model.pagination.PageResponse;
-import com.atlassian.confluence.api.model.pagination.SimplePageRequest;
 import com.atlassian.confluence.api.service.search.CQLSearchService;
 import com.atlassian.confluence.spaces.Space;
 import com.atlassian.confluence.spaces.SpaceManager;
@@ -77,7 +74,7 @@ class Migrator {
             int totalChunkCount = uploadChunks();
             uploadEndingPayload(totalChunkCount);
         } catch (Exception e) {
-            logMigrationDetails("Error while running app migration");
+            logErrorMigrationDetails("Error while running app migration", e);
         }
     }
 
@@ -91,43 +88,29 @@ class Migrator {
 
     private int uploadChunks() throws IOException {
         log.info("Start uploading data chunks");
-        final Map<Long, String> spaceMap = getMigratedSpaceMap(gateway, transferId);
+        final Map<Long, String> spaceMap = getMigratedSpaceMap();
         int index = 0;
         for (final Map.Entry<Long, String> space : spaceMap.entrySet()) {
             final long spaceId = space.getKey();
             final String spaceKey = space.getValue();
-            PageResponse<Content> pageResponse = null;
-            do {
+            final Iterable<List<Content>> cqlSearchIterable = () -> new CqlSearchIterator(
+                    cqlSearchService,
+                    "macro = \"markdown-from-url\" AND space = " + spaceKey,
+                    CQL_BATCH_SIZE
+            );
+            for (final List<Content> pages : cqlSearchIterable) {
                 log.info("Start searching pages for chunk #{} (space {})...", index, spaceKey);
-                // https://confluence.atlassian.com/confkb/searching-for-content-with-the-rest-api-and-cql-always-limits-results-to-50-1032258424.html
-                pageResponse = cqlSearchService.searchContent(
-                        "macro = \"markdown-from-url\" AND space = " + spaceKey,
-                        nextPage(pageResponse)
-                );
-                final List<PageData> pageDataList = buildPageDataList(gateway, transferId, spaceId, pageResponse);
-
                 try {
+                    final List<PageData> pageDataList = buildPageDataList(spaceId, pages);
                     uploadDataPayload(spaceKey, pageDataList, index);
                 } catch (Exception e) {
                     logErrorMigrationDetails("Error while preparing migration payload #" + index, e);
                     uploadErrorPayload(index, e);
                 }
                 index++;
-            } while (hasMore(pageResponse));
+            }
         }
         return index;
-    }
-
-    private PageRequest nextPage(PageResponse<Content> pageResponse) {
-        final int nextStart = Optional.ofNullable(pageResponse)
-                .map(PageResponse::getPageRequest)
-                .map(page -> page.getStart() + page.getLimit())
-                .orElse(0);
-        return new SimplePageRequest(nextStart, CQL_BATCH_SIZE);
-    }
-
-    private boolean hasMore(PageResponse<Content> pageResponse) {
-        return Optional.ofNullable(pageResponse).map(PageResponse::hasMore).orElse(false);
     }
 
     private void uploadDataPayload(String spaceKey, List<PageData> pageDataList, int index) throws IOException {
@@ -167,7 +150,11 @@ class Migrator {
         upload(ERROR_PAYLOAD, objectMapper.writeValueAsBytes(topLevelNode));
     }
 
-    private Map<Long, String> getMigratedSpaceMap(AppCloudMigrationGateway gateway, String transferId) {
+    /**
+     * Get migrated spaces that are actually exist at the time when migration is triggered.
+     * @return a map of space ID to space key
+     */
+    private Map<Long, String> getMigratedSpaceMap() {
         log.info("Start get migrated space...");
         final Set<String> spaceIds = new HashSet<>();
         final PaginatedMapping spaceIterator = gateway.getPaginatedMapping(transferId, "confluence:space", 5000);
@@ -183,13 +170,16 @@ class Migrator {
         return spaceKeyMap;
     }
 
-    private List<PageData> buildPageDataList(AppCloudMigrationGateway gateway, String transferId, long spaceId, PageResponse<Content> pageResponse) {
+    /**
+     * Build java model of the upload payload.
+     */
+    private List<PageData> buildPageDataList(long spaceId, List<Content> pages) {
         log.info("Start build page data list...");
-        final Map<String, Content> serverPageById = Optional.ofNullable(pageResponse)
-                .map(PageResponse::getResults)
-                .orElseGet(Collections::emptyList)
-                .stream()
-                .collect(Collectors.toMap(page -> String.valueOf(page.getId().asLong()), Function.identity()));
+        final Map<String, Content> serverPageById = pages.stream().collect(Collectors.toMap(
+                page -> String.valueOf(page.getId().asLong()),
+                Function.identity(),
+                (p1, p2) -> p1
+        ));
 
         final Set<String> serverPageIds = serverPageById.keySet();
 
@@ -212,9 +202,13 @@ class Migrator {
                 .collect(Collectors.toList());
 
         userService.enrichCloudUser(gateway, transferId, pageDataList);
+
         return pageDataList;
     }
 
+    /**
+     * Upload to S3.
+     */
     private void upload(String label, byte[] data) {
         final RetryPolicy<Object> retryPolicy = RetryPolicy.builder()
                 .withMaxRetries(5)
