@@ -5,7 +5,6 @@ import com.atlassian.confluence.api.model.pagination.PageRequest;
 import com.atlassian.confluence.api.model.pagination.PageResponse;
 import com.atlassian.confluence.api.model.pagination.SimplePageRequest;
 import com.atlassian.confluence.api.service.search.CQLSearchService;
-import com.atlassian.confluence.rest.api.model.ExpansionsParser;
 import com.atlassian.confluence.spaces.Space;
 import com.atlassian.confluence.spaces.SpaceManager;
 import com.atlassian.confluence.user.AuthenticatedUserThreadLocal;
@@ -34,7 +33,7 @@ import java.util.stream.StreamSupport;
 
 class Migrator {
     private static final Logger log = LoggerFactory.getLogger(Migrator.class);
-    private static final int BATCH_SIZE = 5000;
+    private static final int CQL_BATCH_SIZE = 1000;
     private static final String STARTING_PAYLOAD = "STARTING_PAYLOAD";
     private static final String DATA_PAYLOAD = "DATA_PAYLOAD";
     private static final String ERROR_PAYLOAD = "ERROR_PAYLOAD";
@@ -92,18 +91,20 @@ class Migrator {
 
     private int uploadChunks() throws IOException {
         log.info("Start uploading data chunks");
-        final Set<String> spaceKeys = getMigratedSpaceKeys(gateway, transferId);
+        final Map<Long, String> spaceMap = getMigratedSpaceMap(gateway, transferId);
         int index = 0;
-        for (final String spaceKey : spaceKeys) {
+        for (final Map.Entry<Long, String> space : spaceMap.entrySet()) {
+            final long spaceId = space.getKey();
+            final String spaceKey = space.getValue();
             PageResponse<Content> pageResponse = null;
             do {
                 log.info("Start searching pages for chunk #{} (space {})...", index, spaceKey);
+                // https://confluence.atlassian.com/confkb/searching-for-content-with-the-rest-api-and-cql-always-limits-results-to-50-1032258424.html
                 pageResponse = cqlSearchService.searchContent(
                         "macro = \"markdown-from-url\" AND space = " + spaceKey,
-                        nextPage(pageResponse),
-                        ExpansionsParser.parse("history,body.storage,space")
+                        nextPage(pageResponse)
                 );
-                final List<PageData> pageDataList = buildPageDataList(gateway, transferId, pageResponse);
+                final List<PageData> pageDataList = buildPageDataList(gateway, transferId, spaceId, pageResponse);
 
                 try {
                     uploadDataPayload(spaceKey, pageDataList, index);
@@ -122,7 +123,7 @@ class Migrator {
                 .map(PageResponse::getPageRequest)
                 .map(page -> page.getStart() + page.getLimit())
                 .orElse(0);
-        return new SimplePageRequest(nextStart, BATCH_SIZE);
+        return new SimplePageRequest(nextStart, CQL_BATCH_SIZE);
     }
 
     private boolean hasMore(PageResponse<Content> pageResponse) {
@@ -166,7 +167,7 @@ class Migrator {
         upload(ERROR_PAYLOAD, objectMapper.writeValueAsBytes(topLevelNode));
     }
 
-    private Set<String> getMigratedSpaceKeys(AppCloudMigrationGateway gateway, String transferId) {
+    private Map<Long, String> getMigratedSpaceMap(AppCloudMigrationGateway gateway, String transferId) {
         log.info("Start get migrated space...");
         final Set<String> spaceIds = new HashSet<>();
         final PaginatedMapping spaceIterator = gateway.getPaginatedMapping(transferId, "confluence:space", 5000);
@@ -174,22 +175,20 @@ class Migrator {
             final Map<String, String> mappings = spaceIterator.getMapping();
             spaceIds.addAll(mappings.keySet());
         }
-        final Set<String> spaceKeys = spaceIds.stream()
+        final Map<Long, String> spaceKeyMap = spaceIds.stream()
                 .map(spaceId -> spaceManager.getSpace(Long.parseLong(spaceId)))
                 .filter(Objects::nonNull)
-                .map(Space::getKey)
-                .collect(Collectors.toSet());
-        log.info("Migrated space keys: {}", String.join(", ", spaceKeys));
-        return spaceKeys;
+                .collect(Collectors.toMap(Space::getId, Space::getKey));
+        log.info("Migrated space keys: {}", String.join(", ", spaceKeyMap.values()));
+        return spaceKeyMap;
     }
 
-    private List<PageData> buildPageDataList(AppCloudMigrationGateway gateway, String transferId, PageResponse<Content> pageResponse) {
+    private List<PageData> buildPageDataList(AppCloudMigrationGateway gateway, String transferId, long spaceId, PageResponse<Content> pageResponse) {
         log.info("Start build page data list...");
         final Map<String, Content> serverPageById = Optional.ofNullable(pageResponse)
                 .map(PageResponse::getResults)
                 .orElseGet(Collections::emptyList)
                 .stream()
-                .filter(this::isLatestVersion)
                 .collect(Collectors.toMap(page -> String.valueOf(page.getId().asLong()), Function.identity()));
 
         final Set<String> serverPageIds = serverPageById.keySet();
@@ -206,7 +205,7 @@ class Migrator {
                     final String serverPageId = entry.getKey();
                     final String cloudPageId = entry.getValue();
                     final Optional<Content> pageOpt = Optional.ofNullable(serverPageById.get(serverPageId));
-                    return pageOpt.map(page -> new PageData(serverPageId, cloudPageId, page.getSpace().getId(), page));
+                    return pageOpt.map(page -> new PageData(serverPageId, cloudPageId, spaceId, page));
                 })
                 .filter(Optional::isPresent)
                 .map(Optional::get)
@@ -251,13 +250,6 @@ class Migrator {
         } else {
             throw new RuntimeException("Please make sure confluence-administrators has at least 1 user");
         }
-    }
-
-    private boolean isLatestVersion(Content page) {
-        return Optional
-                .ofNullable(page.getHistory())
-                .map(History::isLatest)
-                .orElse(false);
     }
 
     private void logMigrationDetails(String message) {
