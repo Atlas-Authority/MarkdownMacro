@@ -24,6 +24,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -80,10 +81,11 @@ class Migrator {
 
     private void uploadStartingPayload() throws IOException {
         log.info("Start uploading starting payload");
-        final ObjectMapper objectMapper = new ObjectMapper();
-        final ObjectNode topLevelNode = objectMapper.createObjectNode();
-        topLevelNode.put("serverAppVersion", serverAppVersion);
-        upload(STARTING_PAYLOAD, objectMapper.writeValueAsBytes(topLevelNode));
+        buildPayloadAndUpload(STARTING_PAYLOAD, objectMapper -> {
+            final ObjectNode node = objectMapper.createObjectNode();
+            node.put("serverAppVersion", serverAppVersion);
+            return node;
+        });
     }
 
     private int uploadChunks() throws IOException {
@@ -115,39 +117,42 @@ class Migrator {
 
     private void uploadDataPayload(String spaceKey, List<PageData> pageDataList, int index) throws IOException {
         log.info("Start uploading data payload #{}...", index);
-        final ObjectMapper objectMapper = new ObjectMapper();
-        final ObjectNode topLevelNode = objectMapper.createObjectNode();
-        topLevelNode.put("serverAppVersion", serverAppVersion);
-        topLevelNode.put("spaceKey", spaceKey);
-        topLevelNode.put("index", index);
-        final ArrayNode pagesNode = topLevelNode.putArray("pages");
-        final ArrayNode cloudPageIdsNode = topLevelNode.putArray("cloudPageId");
+        buildPayloadAndUpload(DATA_PAYLOAD, objectMapper -> {
+            final ObjectNode node = objectMapper.createObjectNode();
+            node.put("serverAppVersion", serverAppVersion);
+            node.put("spaceKey", spaceKey);
+            node.put("index", index);
+            final ArrayNode pagesNode = node.putArray("pages");
+            final ArrayNode cloudPageIdsNode = node.putArray("cloudPageId");
 
-        for (PageData pageData : pageDataList) {
-            cloudPageIdsNode.add(pageData.getCloudId());
-            final ObjectNode page = pagesNode.addObject();
-            page.put("pageId", pageData.getCloudId());
-            page.put("accountId", pageData.getCloudUserKey());
-        }
+            for (PageData pageData : pageDataList) {
+                cloudPageIdsNode.add(pageData.getCloudId());
+                final ObjectNode page = pagesNode.addObject();
+                page.put("pageId", pageData.getCloudId());
+                page.put("accountId", pageData.getCloudUserKey());
+            }
 
-        upload(DATA_PAYLOAD, objectMapper.writeValueAsBytes(topLevelNode));
+            return node;
+        });
     }
 
     private void uploadEndingPayload(int totalChunkCount) throws IOException {
         log.info("Start uploading ending payload...");
-        final ObjectMapper objectMapper = new ObjectMapper();
-        final ObjectNode topLevelNode = objectMapper.createObjectNode();
-        topLevelNode.put("totalChunkCount", totalChunkCount);
-        upload(ENDING_PAYLOAD, objectMapper.writeValueAsBytes(topLevelNode));
+        buildPayloadAndUpload(ENDING_PAYLOAD, objectMapper -> {
+            final ObjectNode node = objectMapper.createObjectNode();
+            node.put("totalChunkCount", totalChunkCount);
+            return node;
+        });
     }
 
     private void uploadErrorPayload(int index, Exception e) throws IOException {
         log.info("Start uploading error payload...");
-        final ObjectMapper objectMapper = new ObjectMapper();
-        final ObjectNode topLevelNode = objectMapper.createObjectNode();
-        topLevelNode.put("index", index);
-        topLevelNode.put("error", "Error while preparing migration payload in server app: " + e.getMessage());
-        upload(ERROR_PAYLOAD, objectMapper.writeValueAsBytes(topLevelNode));
+        buildPayloadAndUpload(ERROR_PAYLOAD, objectMapper -> {
+            final ObjectNode node = objectMapper.createObjectNode();
+            node.put("index", index);
+            node.put("error", "Error while preparing migration payload in server app: " + e.getMessage());
+            return node;
+        });
     }
 
     /**
@@ -204,6 +209,12 @@ class Migrator {
         userService.enrichCloudUser(gateway, transferId, pageDataList);
 
         return pageDataList;
+    }
+
+    private void buildPayloadAndUpload(String label, Function<ObjectMapper, ObjectNode> payloadBuilder) throws IOException {
+        final ObjectMapper objectMapper = new ObjectMapper();
+        final ObjectNode payload = payloadBuilder.apply(objectMapper);
+        upload(label, objectMapper.writeValueAsBytes(payload));
     }
 
     /**
