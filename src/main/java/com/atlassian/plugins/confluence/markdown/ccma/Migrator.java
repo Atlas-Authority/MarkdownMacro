@@ -85,6 +85,7 @@ class Migrator {
         buildPayloadAndUpload(STARTING_PAYLOAD, objectMapper -> {
             final ObjectNode node = objectMapper.createObjectNode();
             node.put("serverAppVersion", serverAppVersion);
+            node.put("sourceApp", "markdown-macro");
             return node;
         });
     }
