@@ -1,9 +1,9 @@
 package com.atlassian.plugins.confluence.markdown.ccma;
 
 import com.atlassian.confluence.api.model.content.*;
+import com.atlassian.confluence.api.model.pagination.PageResponse;
+import com.atlassian.confluence.api.service.content.SpaceService;
 import com.atlassian.confluence.api.service.search.CQLSearchService;
-import com.atlassian.confluence.spaces.Space;
-import com.atlassian.confluence.spaces.SpaceManager;
 import com.atlassian.confluence.user.AuthenticatedUserThreadLocal;
 import com.atlassian.confluence.user.ConfluenceUser;
 import com.atlassian.confluence.user.UserAccessor;
@@ -24,7 +24,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
@@ -32,12 +31,14 @@ import java.util.stream.StreamSupport;
 class Migrator {
     private static final Logger log = LoggerFactory.getLogger(Migrator.class);
     private static final int CQL_BATCH_SIZE = 1000;
+    private static final int FETCH_SPACE_SIZE = 100;
+    private static final int GET_MAPPING_SIZE = 5000;
     private static final String STARTING_PAYLOAD = "STARTING_PAYLOAD";
     private static final String DATA_PAYLOAD = "DATA_PAYLOAD";
     private static final String ERROR_PAYLOAD = "ERROR_PAYLOAD";
     private static final String ENDING_PAYLOAD = "ENDING_PAYLOAD";
 
-    private final SpaceManager spaceManager;
+    private final SpaceService spaceService;
     private final CQLSearchService cqlSearchService;
     private final UserAccessor userAccessor;
     private final String serverAppVersion;
@@ -48,7 +49,7 @@ class Migrator {
     private final MigrationDetailsV1 migrationDetails;
 
     Migrator(
-            SpaceManager spaceManager,
+            SpaceService spaceService,
             CQLSearchService cqlSearchService,
             UserAccessor userAccessor,
             String serverAppVersion,
@@ -57,7 +58,7 @@ class Migrator {
             String transferId,
             MigrationDetailsV1 migrationDetails
     ) {
-        this.spaceManager = spaceManager;
+        this.spaceService = spaceService;
         this.cqlSearchService = cqlSearchService;
         this.userAccessor = userAccessor;
         this.serverAppVersion = serverAppVersion;
@@ -95,12 +96,12 @@ class Migrator {
         for (final Map.Entry<Long, String> space : spaceMap.entrySet()) {
             final long spaceId = space.getKey();
             final String spaceKey = space.getValue();
-            final Iterable<List<Content>> cqlSearchIterable = () -> new CqlSearchIterator(
+            final PageIterable<Content> cqlSearchIterable = PageIterable.cqlSearch(
                     cqlSearchService,
                     "macro = \"markdown-from-url\" AND space = " + spaceKey,
                     CQL_BATCH_SIZE
             );
-            for (final List<Content> pages : cqlSearchIterable) {
+            for (final PageResponse<Content> pages : cqlSearchIterable) {
                 log.info("Start searching pages for chunk #{} (space {})...", index, spaceKey);
                 try {
                     final List<PageData> pageDataList = buildPageDataList(spaceId, pages);
@@ -161,16 +162,27 @@ class Migrator {
      */
     private Map<Long, String> getMigratedSpaceMap() {
         log.info("Start get migrated space...");
-        final Set<String> spaceIds = new HashSet<>();
-        final PaginatedMapping spaceIterator = gateway.getPaginatedMapping(transferId, "confluence:space", 5000);
-        while (spaceIterator.next()) {
-            final Map<String, String> mappings = spaceIterator.getMapping();
-            spaceIds.addAll(mappings.keySet());
+
+        // Get all migrated spaces
+        final Set<String> migratedSpaceIds = new HashSet<>();
+        final PaginatedMapping migratedSpaceIterator = gateway.getPaginatedMapping(transferId, "confluence:space", GET_MAPPING_SIZE);
+        while (migratedSpaceIterator.next()) {
+            final Map<String, String> mappings = migratedSpaceIterator.getMapping();
+            migratedSpaceIds.addAll(mappings.keySet());
         }
-        final Map<Long, String> spaceKeyMap = spaceIds.stream()
-                .map(spaceId -> spaceManager.getSpace(Long.parseLong(spaceId)))
-                .filter(Objects::nonNull)
-                .collect(Collectors.toMap(Space::getId, Space::getKey));
+
+        // Get all current spaces on server side
+        final List<Space> spaces = new ArrayList<>();
+        final PageIterable<Space> spaceIterable = PageIterable.spaces(spaceService, FETCH_SPACE_SIZE);
+        for (final PageResponse<Space> spacePage : spaceIterable) {
+            spaces.addAll(spacePage.getResults());
+        }
+
+        // Filter out migrated spaces which actually exist
+        final Map<Long, String> spaceKeyMap = spaces.stream()
+                .filter(space -> migratedSpaceIds.contains(String.valueOf(space.getId())))
+                .collect(Collectors.toMap(Space::getId, Space::getKey, (p1, p2) -> p1));
+
         log.info("Migrated space keys: {}", String.join(", ", spaceKeyMap.values()));
         return spaceKeyMap;
     }
@@ -178,9 +190,9 @@ class Migrator {
     /**
      * Build java model of the upload payload.
      */
-    private List<PageData> buildPageDataList(long spaceId, List<Content> pages) {
+    private List<PageData> buildPageDataList(long spaceId, PageResponse<Content> pages) {
         log.info("Start build page data list...");
-        final Map<String, Content> serverPageById = pages.stream().collect(Collectors.toMap(
+        final Map<String, Content> serverPageById = pages.getResults().stream().collect(Collectors.toMap(
                 page -> String.valueOf(page.getId().asLong()),
                 Function.identity(),
                 (p1, p2) -> p1
@@ -211,6 +223,9 @@ class Migrator {
         return pageDataList;
     }
 
+    /**
+     * Loan pattern to build and upload payload.
+     */
     private void buildPayloadAndUpload(String label, Function<ObjectMapper, ObjectNode> payloadBuilder) throws IOException {
         final ObjectMapper objectMapper = new ObjectMapper();
         final ObjectNode payload = payloadBuilder.apply(objectMapper);

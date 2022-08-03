@@ -1,7 +1,7 @@
 package com.atlassian.plugins.confluence.markdown.ccma;
 
+import com.atlassian.confluence.api.service.content.SpaceService;
 import com.atlassian.confluence.api.service.search.CQLSearchService;
-import com.atlassian.confluence.spaces.SpaceManager;
 import com.atlassian.confluence.user.UserAccessor;
 import com.atlassian.migration.app.*;
 import com.atlassian.migration.app.gateway.AppCloudMigrationGateway;
@@ -21,7 +21,7 @@ import static com.atlassian.migration.app.AccessScope.*;
 @ExportAsService
 public class MigrationListener implements DiscoverableListener {
 
-    private final SpaceManager spaceManager;
+    private final SpaceService spaceService;
     private final CQLSearchService cqlSearchService;
     private final UserAccessor userAccessor;
     private final String serverAppVersion;
@@ -30,12 +30,12 @@ public class MigrationListener implements DiscoverableListener {
     @Inject
     public MigrationListener(
             @Value("${build.version}") String serverAppVersion,
-            @ConfluenceImport SpaceManager spaceManager,
+            @ConfluenceImport SpaceService spaceService,
             @ConfluenceImport CQLSearchService cqlSearchService,
             @ConfluenceImport UserAccessor userAccessor,
             UserService userService
     ) {
-        this.spaceManager = spaceManager;
+        this.spaceService = spaceService;
         this.cqlSearchService = cqlSearchService;
         this.userAccessor = userAccessor;
         this.serverAppVersion = serverAppVersion;
@@ -45,7 +45,7 @@ public class MigrationListener implements DiscoverableListener {
     @Override
     public void onStartAppMigration(AppCloudMigrationGateway gateway, String transferId, MigrationDetailsV1 migrationDetails) {
         new Migrator(
-                spaceManager,
+                spaceService,
                 cqlSearchService,
                 userAccessor,
                 serverAppVersion,
