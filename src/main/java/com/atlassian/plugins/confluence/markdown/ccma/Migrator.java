@@ -35,7 +35,7 @@ class Migrator {
     private static final int GET_MAPPING_SIZE = 5000;
     private static final String STARTING_PAYLOAD = "STARTING_PAYLOAD";
     private static final String DATA_PAYLOAD = "DATA_PAYLOAD";
-    private static final String ERROR_PAYLOAD = "ERROR_PAYLOAD";
+    private static final String DATA_ERROR_PAYLOAD = "DATA_ERROR_PAYLOAD";
     private static final String ENDING_PAYLOAD = "ENDING_PAYLOAD";
 
     private final SpaceService spaceService;
@@ -73,8 +73,8 @@ class Migrator {
         try {
             setAdminUser();
             uploadStartingPayload();
-            int totalChunkCount = uploadChunks();
-            uploadEndingPayload(totalChunkCount);
+            int totalNonEmptyChunks = uploadChunks();
+            uploadEndingPayload(totalNonEmptyChunks);
         } catch (Exception e) {
             logErrorMigrationDetails("Error while running app migration", e);
         }
@@ -94,6 +94,7 @@ class Migrator {
         log.info("Start uploading data chunks");
         final Map<Long, String> spaceMap = getMigratedSpaceMap();
         int index = 0;
+        int totalNonEmptyChunks = 0;
         for (final Map.Entry<Long, String> space : spaceMap.entrySet()) {
             final long spaceId = space.getKey();
             final String spaceKey = space.getValue();
@@ -107,6 +108,9 @@ class Migrator {
                 try {
                     final List<PageData> pageDataList = buildPageDataList(spaceId, pages);
                     uploadDataPayload(spaceKey, pageDataList, index);
+                    if (pageDataList.size() > 0) {
+                        totalNonEmptyChunks++;
+                    }
                 } catch (Exception e) {
                     logErrorMigrationDetails("Error while preparing migration payload #" + index, e);
                     uploadErrorPayload(index, e);
@@ -114,16 +118,14 @@ class Migrator {
                 index++;
             }
         }
-        return index;
+        return totalNonEmptyChunks;
     }
 
     private void uploadDataPayload(String spaceKey, List<PageData> pageDataList, int index) throws IOException {
         log.info("Start uploading data payload #{}...", index);
-        buildPayloadAndUpload(DATA_PAYLOAD, objectMapper -> {
+        buildPayloadAndUpload(DATA_PAYLOAD + "_" + pageDataList.size(), objectMapper -> {
             final ObjectNode node = objectMapper.createObjectNode();
-            node.put("serverAppVersion", serverAppVersion);
             node.put("spaceKey", spaceKey);
-            node.put("index", index);
             final ArrayNode pagesNode = node.putArray("pages");
             final ArrayNode cloudPageIdsNode = node.putArray("cloudPageId");
 
@@ -138,20 +140,19 @@ class Migrator {
         });
     }
 
-    private void uploadEndingPayload(int totalChunkCount) throws IOException {
+    private void uploadEndingPayload(int totalNonEmptyChunks) throws IOException {
         log.info("Start uploading ending payload...");
-        buildPayloadAndUpload(ENDING_PAYLOAD, objectMapper -> {
+        buildPayloadAndUpload(ENDING_PAYLOAD + "_" + totalNonEmptyChunks, objectMapper -> {
             final ObjectNode node = objectMapper.createObjectNode();
-            node.put("totalChunkCount", totalChunkCount);
+            node.put("totalNonEmptyChunks", totalNonEmptyChunks);
             return node;
         });
     }
 
     private void uploadErrorPayload(int index, Exception e) throws IOException {
-        log.info("Start uploading error payload...");
-        buildPayloadAndUpload(ERROR_PAYLOAD, objectMapper -> {
+        log.info("Start uploading error payload #{}...", index);
+        buildPayloadAndUpload(DATA_ERROR_PAYLOAD, objectMapper -> {
             final ObjectNode node = objectMapper.createObjectNode();
-            node.put("index", index);
             node.put("error", "Error while preparing migration payload in server app: " + e.getMessage());
             return node;
         });
