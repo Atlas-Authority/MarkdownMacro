@@ -54,7 +54,7 @@ public class MarkdownMacro extends BaseMacro implements Macro {
     private ConfluenceBandanaContext context = new ConfluenceBandanaContext("markdown-plugin");
 
     @Autowired
-    public MarkdownMacro(@ComponentImport PageBuilderService pageBuilderService, XhtmlContent xhtmlUtils, BandanaManager bandanaManager) {  
+    public MarkdownMacro(@ComponentImport PageBuilderService pageBuilderService, @ComponentImport XhtmlContent xhtmlUtils, @ComponentImport BandanaManager bandanaManager) {
         this.pageBuilderService = pageBuilderService;
         this.xhtmlUtils = xhtmlUtils;
         this.bandanaManager = bandanaManager;
