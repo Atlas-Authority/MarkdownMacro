@@ -190,13 +190,6 @@
                     <!-- https://developer.atlassian.com/docs/advanced-topics/configuration-of-instructions-in-atlassian-plugins -->
                     <instructions>
                         <Atlassian-Plugin-Key>${atlassian.plugin.key}</Atlassian-Plugin-Key>
-
-                        <Export-Package>
-                            com.atlassian.migration.app.listener,
-                            com.atlassian.migration.app.gateway,
-                            com.atlassian.migration.app,
-                        </Export-Package>
-
                         <!-- Add package import here -->
                         <Import-Package>
                             com.atlassian.*;resolution:="optional",

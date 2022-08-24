@@ -100,7 +100,7 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 	}
 
     @Autowired
-    public MarkdownFromURLMacro(@ComponentImport PageBuilderService pageBuilderService, XhtmlContent xhtmlUtils, BandanaManager bandanaManager) {
+    public MarkdownFromURLMacro(@ComponentImport PageBuilderService pageBuilderService, @Autowired XhtmlContent xhtmlUtils, @Autowired BandanaManager bandanaManager) {
         this.pageBuilderService = pageBuilderService;
         this.xhtmlUtils = xhtmlUtils;
         this.bandanaManager = bandanaManager;
