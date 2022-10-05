@@ -199,6 +199,7 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 		if (bodyContent != null) {
 
 			pageBuilderService.assembler().resources().requireWebResource("com.atlassian.plugins.confluence.markdown.confluence-markdown-macro:highlightjs");
+      	    pageBuilderService.assembler().resources().requireWebResource("com.atlassian.plugins.confluence.markdown.confluence-markdown-macro:mermaidjs");
 
 			MutableDataSet options = new MutableDataSet()
 				.set(HtmlRenderer.GENERATE_HEADER_ID, true)
@@ -228,6 +229,20 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 					".hljs {display: inline;}\n" +
 					"pre > code {display: block !important;}\n" +
 					"</style>";
+                    
+            String rendermermaidjs ="<script>\n"+
+                "var config = {\n"+
+                "    startOnLoad:true,\n"+
+                "    theme: 'default',\n"+
+                "    flowchart:{\n"+
+                "            useMaxWidth:false,\n"+
+                "            htmlLabels:true\n"+
+                "        }\n"+
+                "};\n"+
+                "mermaid.initialize(config);\n"+
+                "window.mermaid.init(undefined, document.querySelectorAll('.language-mermaid'));\n"+
+                "</script>\n";
+
 
 			URL importFrom = null;
 			try {
@@ -371,7 +386,7 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 					if (useRelativePathsAzureDevOps) {
 						sanitizedBody = sanitizedBody.replace("?path&#61;", "?path=");
 					}
-			        html =  sanitizedBody +  highlightjs + highlightjscss;
+			        html =  sanitizedBody +  highlightjs + rendermermaidjs + highlightjscss;
 
 					return html;
 				}
