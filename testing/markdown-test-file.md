@@ -188,6 +188,68 @@ With a reference later in the document defining the URL location:
 # OTHER PLUGINS
 ---
 
+## Mermaid
+this code
+```
+graph TB
+    classDef blue fill:#2374f7,stroke:#000,stroke-width:2px,color:#fff
+    classDef pink fill:#eb3dd6,stroke:#000,stroke-width:2px,color:#fff
+    classDef orange fill:#fc822b,stroke:#000,stroke-width:2px,color:#fff
+    classDef red fill:#ed2633,stroke:#000,stroke-width:2px,color:#fff
+    classDef green fill:#16b522,stroke:#000,stroke-width:2px,color:#fff
+
+    u[user]:::blue -- "request" --> fw[/firewall/]:::red
+    fw == "loadbalance" ==> ch{{cache}}:::orange
+    ch == "loadbalance" ==> ws1[[webservice]]:::blue
+    ch == "loadbalance" ==> ws2[[webservice]]:::blue
+    fw -. "is AT valid ?" .-> idp{"idp"}:::orange
+    idp -. "AT is valid" .-> fw
+    ws1 == "put data" ==> db[(database)]:::blue
+    ws2 == "put data" ==> db[(database)]:::blue
+    subgraph  datacenter
+        subgraph  Cluster
+            ws1
+            ws2
+            db
+            ch
+            fw
+        end
+        subgraph  DMZ
+            idp
+        end
+    end
+```
+gives this result
+```mermaid
+graph TB
+    classDef blue fill:#2374f7,stroke:#000,stroke-width:2px,color:#fff
+    classDef pink fill:#eb3dd6,stroke:#000,stroke-width:2px,color:#fff
+    classDef orange fill:#fc822b,stroke:#000,stroke-width:2px,color:#fff
+    classDef red fill:#ed2633,stroke:#000,stroke-width:2px,color:#fff
+    classDef green fill:#16b522,stroke:#000,stroke-width:2px,color:#fff
+
+    u[user]:::blue -- "request" --> fw[/firewall/]:::red
+    fw == "loadbalance" ==> ch{{cache}}:::orange
+    ch == "loadbalance" ==> ws1[[webservice]]:::blue
+    ch == "loadbalance" ==> ws2[[webservice]]:::blue
+    fw -. "is AT valid ?" .-> idp{"idp"}:::orange
+    idp -. "AT is valid" .-> fw
+    ws1 == "put data" ==> db[(database)]:::blue
+    ws2 == "put data" ==> db[(database)]:::blue
+    subgraph  datacenter
+        subgraph  Cluster
+            ws1
+            ws2
+            db
+            ch
+            fw
+        end
+        subgraph  DMZ
+            idp
+        end
+    end
+```
+
 ## StrikethroughSubscriptExtension & SuperscriptExtension
 
 - ~~Strikethrough~~
