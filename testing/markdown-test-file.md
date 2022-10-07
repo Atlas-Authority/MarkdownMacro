@@ -190,7 +190,8 @@ With a reference later in the document defining the URL location:
 
 ## Mermaid
 this code
-```
+````
+```mermaid
 graph TB
     classDef blue fill:#2374f7,stroke:#000,stroke-width:2px,color:#fff
     classDef pink fill:#eb3dd6,stroke:#000,stroke-width:2px,color:#fff
@@ -198,14 +199,14 @@ graph TB
     classDef red fill:#ed2633,stroke:#000,stroke-width:2px,color:#fff
     classDef green fill:#16b522,stroke:#000,stroke-width:2px,color:#fff
 
-    u[user]:::blue -- "request" --> fw[/firewall/]:::red
-    fw == "loadbalance" ==> ch{{cache}}:::orange
+    u(user):::blue -- "request" --> fw[/firewall/]:::red
+    fw == "loadbalance" ==> ch>cache]:::orange
     ch == "loadbalance" ==> ws1[[webservice]]:::blue
     ch == "loadbalance" ==> ws2[[webservice]]:::blue
-    fw -. "is AT valid ?" .-> idp{"idp"}:::orange
+    fw -. "is AT valid ?" .-> idp{"idp"}:::pink
     idp -. "AT is valid" .-> fw
-    ws1 == "put data" ==> db[(database)]:::blue
-    ws2 == "put data" ==> db[(database)]:::blue
+    ws1 == "put data" ==> db[(database)]:::green
+    ws2 == "put data" ==> db[(database)]
     subgraph  datacenter
         subgraph  Cluster
             ws1
@@ -218,7 +219,8 @@ graph TB
             idp
         end
     end
-```
+```      
+````
 gives this result
 ```mermaid
 graph TB
@@ -228,14 +230,14 @@ graph TB
     classDef red fill:#ed2633,stroke:#000,stroke-width:2px,color:#fff
     classDef green fill:#16b522,stroke:#000,stroke-width:2px,color:#fff
 
-    u[user]:::blue -- "request" --> fw[/firewall/]:::red
-    fw == "loadbalance" ==> ch{{cache}}:::orange
+    u(user):::blue -- "request" --> fw[/firewall/]:::red
+    fw == "loadbalance" ==> ch>cache]:::orange
     ch == "loadbalance" ==> ws1[[webservice]]:::blue
     ch == "loadbalance" ==> ws2[[webservice]]:::blue
-    fw -. "is AT valid ?" .-> idp{"idp"}:::orange
+    fw -. "is AT valid ?" .-> idp{"idp"}:::pink
     idp -. "AT is valid" .-> fw
-    ws1 == "put data" ==> db[(database)]:::blue
-    ws2 == "put data" ==> db[(database)]:::blue
+    ws1 == "put data" ==> db[(database)]:::green
+    ws2 == "put data" ==> db[(database)]
     subgraph  datacenter
         subgraph  Cluster
             ws1
