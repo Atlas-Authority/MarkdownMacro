@@ -127,7 +127,8 @@ public class MarkdownMacro extends BaseMacro implements Macro {
                 "pre > code {display: block !important;}\n" +
                 "</style>";
 
-        String rendermermaidjs ="<script>\n"+
+        String rendermermaidjs ="<script>\n" +
+                "AJS.$('[data-macro-name=\"markdown\"] .language-mermaid').each(function(i, block) {\n" +
                 "var config = {\n"+
                 "    startOnLoad:true,\n"+
                 "    theme: 'default',\n"+
@@ -138,7 +139,8 @@ public class MarkdownMacro extends BaseMacro implements Macro {
                 "};\n"+
                 "mermaid.initialize(config);\n"+
                 "window.mermaid.init(undefined, document.querySelectorAll('.language-mermaid'));\n"+
-                "</script>\n";
+                "  });\n" +
+                "</script>";
 
         Parser parser = Parser.builder(options).build();
         HtmlRenderer renderer = HtmlRenderer.builder(options).build();
