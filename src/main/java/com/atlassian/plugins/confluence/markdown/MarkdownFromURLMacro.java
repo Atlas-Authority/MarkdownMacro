@@ -232,7 +232,7 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
                     
             String rendermermaidjs ="<script>\n" +
                     "AJS.$('[data-macro-name=\"markdown-from-url\"] .language-mermaid').each(function(i, block) {\n" +
-                    "var config = {\n"+
+                    "const config = {\n"+
                     "    startOnLoad:true,\n"+
                     "    theme: 'default',\n"+
                     "    flowchart:{\n"+
@@ -241,7 +241,7 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
                     "        }\n"+
                     "};\n"+
                     "mermaid.initialize(config);\n"+
-                    "window.mermaid.init(undefined, document.querySelectorAll('.language-mermaid'));\n"+
+                    "window.mermaid.init(undefined, block);\n"+
                     "  });\n" +
                     "</script>";
 
