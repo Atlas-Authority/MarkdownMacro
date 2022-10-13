@@ -75,6 +75,7 @@ public class MarkdownMacro extends BaseMacro implements Macro {
 
 
     	pageBuilderService.assembler().resources().requireWebResource("com.atlassian.plugins.confluence.markdown.confluence-markdown-macro:highlightjs");
+       	pageBuilderService.assembler().resources().requireWebResource("com.atlassian.plugins.confluence.markdown.confluence-markdown-macro:mermaidjs");
 
 		MutableDataSet options = new MutableDataSet()
 			.set(HtmlRenderer.GENERATE_HEADER_ID, true)
@@ -126,6 +127,21 @@ public class MarkdownMacro extends BaseMacro implements Macro {
                 "pre > code {display: block !important;}\n" +
                 "</style>";
 
+        String rendermermaidjs ="<script>\n" +
+                "AJS.$('[data-macro-name=\"markdown\"] .language-mermaid').each(function(i, block) {\n" +
+                "const config = {\n"+
+                "    startOnLoad:true,\n"+
+                "    theme: 'default',\n"+
+                "    flowchart:{\n"+
+                "            useMaxWidth:false,\n"+
+                "            htmlLabels:true\n"+
+                "        }\n"+
+                "};\n"+
+                "mermaid.initialize(config);\n"+
+                "window.mermaid.init(undefined, block);\n"+
+                "  });\n" +
+                "</script>";
+
         Parser parser = Parser.builder(options).build();
         HtmlRenderer renderer = HtmlRenderer.builder(options).build();
 
@@ -163,7 +179,7 @@ public class MarkdownMacro extends BaseMacro implements Macro {
 		        .allowTextIn("table")
         		.toFactory();
         String sanitizedBody = policy.sanitize(body.html());
-        String html =  sanitizedBody +  highlightjs + highlightjscss;
+        String html =  sanitizedBody +  highlightjs + rendermermaidjs + highlightjscss;
 
         return html;
 

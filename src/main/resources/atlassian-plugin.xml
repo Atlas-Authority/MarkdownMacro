@@ -89,6 +89,11 @@
         <resource type="download" name="highlight.min.css" location="css/highlight.min.css" />
     </web-resource>
     
+    <web-resource key="mermaidjs" name="mermaid.js" >
+        <resource type="download" name="mermaid.min.js" location="js/mermaid.min.js" />
+        <resource type="download" name="mermaid.min.css" location="css/mermaid.min.css" />
+    </web-resource>
+    
     <web-resource key="markdown-configure-resources" name="Markdown Admin Configuration Resources">
         <dependency>com.atlassian.auiplugin:ajs</dependency>
 
