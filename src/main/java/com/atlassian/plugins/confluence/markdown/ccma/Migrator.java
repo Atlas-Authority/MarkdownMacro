@@ -100,7 +100,7 @@ class Migrator {
             final String spaceKey = space.getValue();
             final PageIterable<Content> cqlSearchIterable = PageIterable.cqlSearch(
                     cqlSearchService,
-                    "macro = \"markdown-from-url\" AND space = " + spaceKey,
+                    String.format("macro = \"markdown-from-url\" AND space = \"%s\"", spaceKey),
                     CQL_BATCH_SIZE
             );
             for (final PageResponse<Content> pages : cqlSearchIterable) {
