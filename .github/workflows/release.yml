@@ -13,7 +13,7 @@ jobs:
       - name: Release
         uses: Atlas-Authority/atlassian-marketplace-release-action/release@main
         with:
-          branch: master
+          branch: main
           githubUserName: DevOps
           githubUserEmail: devops@atlasauthority.com
           githubToken: ${{ secrets.GHA_ADMIN }}
