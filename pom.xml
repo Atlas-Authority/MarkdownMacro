@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/maven-v4_0_0.xsd">
     
     <modelVersion>4.0.0</modelVersion>
     
@@ -62,7 +62,7 @@
         <dependency>
             <groupId>com.vladsch.flexmark</groupId>
             <artifactId>flexmark-all</artifactId>
-            <version>0.61.32</version>
+            <version>0.62.2</version>
         </dependency>
         
         <dependency>
@@ -105,7 +105,7 @@
         <dependency>
 		    <groupId>com.googlecode.owasp-java-html-sanitizer</groupId>
 		    <artifactId>owasp-java-html-sanitizer</artifactId>
-		    <version>20211018.1</version>
+		    <version>20220608.1</version>
 		</dependency>
 		
         <dependency>
@@ -180,7 +180,6 @@
                     <productVersion>${confluence.version}</productVersion>
                     <productDataVersion>${confluence.data.version}</productDataVersion>
                     <enableQuickReload>true</enableQuickReload>
-                    <enableFastdev>false</enableFastdev>
                     <compressJs>false</compressJs>
                     <compressCss>false</compressCss>
                     <compressResources>false</compressResources>
@@ -205,7 +204,9 @@
             </plugin>
 
             <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.10.1</version>
                 <configuration>
                     <source>${java.source.version}</source>
                     <target>${java.target.version}</target>
@@ -257,8 +258,8 @@
         <java.source.version>1.8</java.source.version>
         <java.target.version>1.8</java.target.version>
         <atlassian.plugin.key>com.atlassian.plugins.confluence.markdown.confluence-markdown-macro</atlassian.plugin.key>
-        <confluence.version>7.12.1</confluence.version>
-        <confluence.data.version>7.12.1</confluence.data.version>
+        <confluence.version>8.0.2</confluence.version>
+        <confluence.data.version>8.0.2</confluence.data.version>
         <amps.version>8.0.4</amps.version>
         <plugin.testrunner.version>1.1</plugin.testrunner.version>
         <atlassian.spring.scanner.version>2.2.3</atlassian.spring.scanner.version>
