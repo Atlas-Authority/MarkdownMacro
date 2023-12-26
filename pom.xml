@@ -12,7 +12,7 @@
     
     <groupId>com.atlassian.plugins.confluence.markdown</groupId>
     <artifactId>confluence-markdown-macro</artifactId>
-    <version>1.6.22</version>
+    <version>1.6.23</version>
     
     <organization>
         <name>Atlas Authority</name>
@@ -28,7 +28,7 @@
         <dependency>
             <groupId>com.atlassian</groupId>
             <artifactId>atlassian-app-cloud-migration-listener</artifactId>
-            <version>1.0.2</version>
+            <version>1.2.1</version>
         </dependency>
 
         <dependency>
@@ -139,6 +139,19 @@
             <artifactId>jackson-annotations</artifactId>
             <version>2.12.6</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.google.code.findbugs</groupId>
+            <artifactId>jsr305</artifactId>
+            <version>3.0.2</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.google.guava</groupId>
+            <artifactId>guava</artifactId>
+            <version>31.0.1-jre</version>
+            <scope>provided</scope>
+        </dependency>
         
         <!-- WIRED TEST RUNNER DEPENDENCIES -->
         <dependency>
@@ -183,7 +196,8 @@
                     <compressJs>false</compressJs>
                     <compressCss>false</compressCss>
                     <compressResources>false</compressResources>
-                    <jvmArgs>-Xms1g -Xmx2g -XX:MaxPermSize=1g -XX:-UseGCOverheadLimit -server</jvmArgs>
+                    <jvmArgs>-Xms1g -Xmx2g -XX:-UseGCOverheadLimit -server</jvmArgs>
+                    <libArtifactsString>org.postgresql:postgresql:42.7.0</libArtifactsString>
 
                     <!-- See here for an explanation of default instructions: -->
                     <!-- https://developer.atlassian.com/docs/advanced-topics/configuration-of-instructions-in-atlassian-plugins -->
@@ -258,9 +272,9 @@
         <java.source.version>1.8</java.source.version>
         <java.target.version>1.8</java.target.version>
         <atlassian.plugin.key>com.atlassian.plugins.confluence.markdown.confluence-markdown-macro</atlassian.plugin.key>
-        <confluence.version>8.0.2</confluence.version>
-        <confluence.data.version>8.0.2</confluence.data.version>
-        <amps.version>8.0.4</amps.version>
+        <confluence.version>8.5.4</confluence.version>
+        <confluence.data.version>8.5.4</confluence.data.version>
+        <amps.version>8.6.0</amps.version>
         <plugin.testrunner.version>1.1</plugin.testrunner.version>
         <atlassian.spring.scanner.version>2.2.3</atlassian.spring.scanner.version>
     </properties>
