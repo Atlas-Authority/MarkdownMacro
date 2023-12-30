@@ -93,7 +93,7 @@ class Migrator {
     private int uploadChunks() throws IOException {
         log.info("Start uploading data chunks");
         final Map<Long, String> spaceMap = getMigratedSpaceMap();
-        int index = 0;
+        int indexForLogging = 0;
         int totalNonEmptyChunks = 0;
         for (final Map.Entry<Long, String> space : spaceMap.entrySet()) {
             final long spaceId = space.getKey();
@@ -104,18 +104,20 @@ class Migrator {
                     CQL_BATCH_SIZE
             );
             for (final PageResponse<Content> pages : cqlSearchIterable) {
-                log.info("Start searching pages for chunk #{} (space {})...", index, spaceKey);
+                log.info("Start searching pages for chunk #{} (space {})...", indexForLogging, spaceKey);
                 try {
                     final List<PageData> pageDataList = buildPageDataList(spaceId, pages);
-                    uploadDataPayload(spaceKey, pageDataList, index);
-                    if (pageDataList.size() > 0) {
+                    if (!pageDataList.isEmpty()) {
+                        uploadDataPayload(spaceKey, pageDataList, indexForLogging);
                         totalNonEmptyChunks++;
+                    } else {
+                        log.info("Chunk #{} (space {}) has no macro to migrate", indexForLogging, spaceKey);
                     }
                 } catch (Exception e) {
-                    logErrorMigrationDetails("Error while preparing migration payload #" + index, e);
-                    uploadErrorPayload(index, e);
+                    logErrorMigrationDetails("Error while preparing migration payload #" + indexForLogging, e);
+                    uploadErrorPayload(indexForLogging, e);
                 }
-                index++;
+                indexForLogging++;
             }
         }
         return totalNonEmptyChunks;
