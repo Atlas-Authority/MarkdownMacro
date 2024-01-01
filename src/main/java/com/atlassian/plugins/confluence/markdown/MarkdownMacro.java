@@ -129,9 +129,8 @@ public class MarkdownMacro extends BaseMacro implements Macro {
 
         String rendermermaidjs ="<script>\n" +
                 "AJS.$('[data-macro-name=\"markdown\"] .language-mermaid').each(function(i, block) {\n" +
-				"block.innerHTML = block.innerHTML.replace(/{<!-- -->{/g, \"{{\");\n"+
                 "const config = {\n"+
-                "     securityLevel:'loose',\n"+
+                "     securityLevel:'sandbox',\n"+
                 "    startOnLoad:true,\n"+
                 "    theme: 'default',\n"+
                 "    flowchart:{\n"+
