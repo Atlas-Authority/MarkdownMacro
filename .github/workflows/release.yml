@@ -19,3 +19,4 @@ jobs:
           githubToken: ${{ secrets.GHA_ADMIN }}
           marketplaceUser: devops@atlasauthority.com
           marketplaceToken: ${{ secrets.MARKETPLACE_TOKEN }}
+          mavenVersion: '3.8.5'
