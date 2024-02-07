@@ -38,6 +38,10 @@ class UserService {
      * Populate a use who has edit permission for each page.
      */
     void enrichCloudUser(AppCloudMigrationGateway gateway, String transferId, List<PageData> pageDataList) {
+        if (pageDataList.isEmpty()) {
+            return;
+        }
+
         final Map<String, String> userMap = getUserMap(gateway, transferId);
         final Map<Long, PermData> spacePermissions = spacePermissionService.getPermissions(pageDataList);
         final Map<String, PermData> pageRestrictions = pageRestrictionService.getPermissions(pageDataList);
