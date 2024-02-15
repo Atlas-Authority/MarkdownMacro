@@ -23,6 +23,13 @@ class UserService {
     private final SpacePermissionService spacePermissionService;
     private final PageRestrictionService pageRestrictionService;
 
+    private final LinkedHashMap<String, Map<String, String>> userMapCache = new LinkedHashMap<String, Map<String, String>>() {
+            @Override
+            protected boolean removeEldestEntry(Map.Entry<String, Map<String, String>> eldest) {
+                return this.size() > 2;//we only cache users for up to 2 transfers
+            }
+    };
+
     @Inject
     UserService(
             @ConfluenceImport UserAccessor userAccessor,
@@ -38,6 +45,10 @@ class UserService {
      * Populate a use who has edit permission for each page.
      */
     void enrichCloudUser(AppCloudMigrationGateway gateway, String transferId, List<PageData> pageDataList) {
+        if (pageDataList.isEmpty()) {
+            return;
+        }
+
         final Map<String, String> userMap = getUserMap(gateway, transferId);
         final Map<Long, PermData> spacePermissions = spacePermissionService.getPermissions(pageDataList);
         final Map<String, PermData> pageRestrictions = pageRestrictionService.getPermissions(pageDataList);
@@ -53,19 +64,21 @@ class UserService {
      * User mapping from server id to cloud id.
      */
     private Map<String, String> getUserMap(AppCloudMigrationGateway gateway, String transferId) {
-        final PaginatedMapping paginatedMapping = gateway.getPaginatedMapping(transferId, "identity:user", BATCH_SIZE);
-        final Map<String, String> results = new HashMap<>();
-        while (paginatedMapping.next()) {
-            final Map<String, String> mappings = paginatedMapping.getMapping();
-            for (Map.Entry<String, String> entry : mappings.entrySet()) {
-                String serverUserKey = entry.getKey();
-                String cloudUserKey = entry.getValue();
-                if (serverUserKey.startsWith(USER_MAPPING_PREFIX)) {
-                    results.put(serverUserKey, cloudUserKey);
+        return userMapCache.computeIfAbsent(transferId, (String sid) -> {
+            final PaginatedMapping paginatedMapping = gateway.getPaginatedMapping(sid, "identity:user", BATCH_SIZE);
+            final Map<String, String> results = new HashMap<>();
+            while (paginatedMapping.next()) {
+                final Map<String, String> mappings = paginatedMapping.getMapping();
+                for (Map.Entry<String, String> entry : mappings.entrySet()) {
+                    String serverUserKey = entry.getKey();
+                    String cloudUserKey = entry.getValue();
+                    if (serverUserKey.startsWith(USER_MAPPING_PREFIX)) {
+                        results.put(serverUserKey, cloudUserKey);
+                    }
                 }
             }
-        }
-        return Collections.unmodifiableMap(results);
+            return Collections.unmodifiableMap(results);
+        });
     }
 
     /**
