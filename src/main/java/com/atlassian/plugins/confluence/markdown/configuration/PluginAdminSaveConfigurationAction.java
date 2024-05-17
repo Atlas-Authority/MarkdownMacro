@@ -6,6 +6,7 @@ import com.atlassian.confluence.setup.bandana.ConfluenceBandanaContext;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ConfluenceImport;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.struts2.interceptor.parameter.StrutsParameter;
 
 import javax.inject.Inject;
 
@@ -43,6 +44,7 @@ public class PluginAdminSaveConfigurationAction extends ConfluenceActionSupport 
         return SUCCESS;
     }
 
+    @StrutsParameter
     public void setData(String data) throws Exception {
         model = objectMapper.readValue(data, MacroConfigModel.class);
     }
