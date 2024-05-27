@@ -1,5 +1,7 @@
 package com.atlassian.plugins.confluence.markdown.ccma;
 
+import com.atlassian.confluence.api.model.Expansion;
+import com.atlassian.confluence.api.model.Expansions;
 import com.atlassian.confluence.api.model.content.Content;
 import com.atlassian.confluence.api.model.content.id.ContentId;
 import com.atlassian.confluence.api.model.pagination.PageRequest;
@@ -11,7 +13,6 @@ import com.atlassian.confluence.api.model.people.User;
 import com.atlassian.confluence.api.model.permissions.ContentRestriction;
 import com.atlassian.confluence.api.model.permissions.OperationKey;
 import com.atlassian.confluence.api.service.permissions.ContentRestrictionService;
-import com.atlassian.confluence.rest.api.model.ExpansionsParser;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ConfluenceImport;
 import com.atlassian.sal.api.user.UserKey;
 
@@ -51,7 +52,7 @@ class PageRestrictionService extends PermissionService<Content, String> {
         final List<Subject> subjects = getRestrictions(
                 page.getId(),
                 SubjectType.GROUP,
-                "restrictions.group"
+                new Expansions(new Expansion("restrictions", Expansions.of("group")))
         );
         return subjects.stream()
                 .map(com.atlassian.confluence.api.model.people.Group.class::cast)
@@ -64,7 +65,7 @@ class PageRestrictionService extends PermissionService<Content, String> {
         final List<Subject> subjects = getRestrictions(
                 page.getId(),
                 SubjectType.USER,
-                "restrictions.user"
+                new Expansions(new Expansion("restrictions", Expansions.of("user")))
         );
         return subjects.stream()
                 .map(User.class::cast)
@@ -74,7 +75,7 @@ class PageRestrictionService extends PermissionService<Content, String> {
                 .collect(Collectors.toSet());
     }
 
-    private List<Subject> getRestrictions(ContentId contentId, SubjectType subjectType, String expansion) {
+    private List<Subject> getRestrictions(ContentId contentId, SubjectType subjectType, Expansions expansions) {
         final List<Subject> results = new ArrayList<>();
 
         Optional<PageResponse<Subject>> pageResponse = Optional.empty();
@@ -83,7 +84,7 @@ class PageRestrictionService extends PermissionService<Content, String> {
                     contentId,
                     OperationKey.UPDATE,
                     nextPage(pageResponse),
-                    ExpansionsParser.parse(expansion)
+                    expansions.toArray()
             );
 
             pageResponse = Optional.ofNullable(contentRestriction)
