@@ -52,8 +52,8 @@
 		</dependency>
         <dependency>
             <groupId>com.atlassian.plugins.rest</groupId>
-            <artifactId>atlassian-rest-common</artifactId>
-            <version>2.9.7</version>
+            <artifactId>atlassian-rest-v2-api</artifactId>
+            <version>8.0.1</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
