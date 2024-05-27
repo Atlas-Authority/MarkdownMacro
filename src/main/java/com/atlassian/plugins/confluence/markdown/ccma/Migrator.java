@@ -11,12 +11,12 @@ import com.atlassian.migration.app.PaginatedMapping;
 import com.atlassian.migration.app.gateway.AppCloudMigrationGateway;
 import com.atlassian.migration.app.gateway.MigrationDetailsV1;
 import com.atlassian.user.Group;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import dev.failsafe.Failsafe;
 import dev.failsafe.RetryPolicy;
 import org.apache.commons.collections4.ListUtils;
-import org.codehaus.jackson.map.ObjectMapper;
-import org.codehaus.jackson.node.ArrayNode;
-import org.codehaus.jackson.node.ObjectNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
