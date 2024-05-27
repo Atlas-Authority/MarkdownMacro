@@ -23,8 +23,7 @@ import com.atlassian.confluence.content.render.xhtml.DefaultConversionContext;
 import com.atlassian.confluence.macro.Macro;
 import com.atlassian.confluence.macro.MacroExecutionException;
 import com.atlassian.confluence.setup.bandana.ConfluenceBandanaContext;
-import com.atlassian.confluence.xhtml.api.XhtmlContent;
-import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
+import com.atlassian.plugin.spring.scanner.annotation.imports.ConfluenceImport;
 import com.atlassian.plugins.confluence.markdown.configuration.MacroConfigModel;
 import com.atlassian.plugins.confluence.markdown.ext.DevOpsResizableImage.ResizableImageExtension;
 import com.atlassian.plugins.confluence.markdown.utils.IPAddressUtil;
@@ -61,9 +60,10 @@ import org.owasp.html.HtmlPolicyBuilder;
 import org.owasp.html.PolicyFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import javax.inject.Inject;
+
 public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 
-    private final XhtmlContent xhtmlUtils;
     private BandanaManager bandanaManager;
     private ConfluenceBandanaContext context = new ConfluenceBandanaContext("markdown-plugin");
     private ObjectMapper objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
@@ -99,10 +99,9 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 		}
 	}
 
-    @Autowired
-    public MarkdownFromURLMacro(@ComponentImport PageBuilderService pageBuilderService, @Autowired XhtmlContent xhtmlUtils, @Autowired BandanaManager bandanaManager) {
+	@Inject
+    public MarkdownFromURLMacro(@ConfluenceImport PageBuilderService pageBuilderService, @ConfluenceImport BandanaManager bandanaManager) {
         this.pageBuilderService = pageBuilderService;
-        this.xhtmlUtils = xhtmlUtils;
         this.bandanaManager = bandanaManager;
     }
 
