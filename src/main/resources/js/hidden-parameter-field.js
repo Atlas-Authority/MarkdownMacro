@@ -1,12 +1,12 @@
 function processParameter(param, paramType) {
-    var requestUrl = AJS.contextPath() + '/rest/markdown-from-url/1.0/config/retrieve';
+    const requestUrl = AJS.contextPath() + '/rest/markdown-from-url/1.0/config/retrieve';
 
     // sync request for first loading params, then rendering edit-macro
-    var request = new XMLHttpRequest();
+    const request = new XMLHttpRequest();
     request.open('GET', requestUrl, false);
     request.send(null);
 
-    var parameterField = AJS.MacroBrowser.ParameterFields[paramType](param, {});
+    let parameterField = AJS.MacroBrowser.ParameterFields[paramType](param, {});
 
     if (request.status === 200) {
         parameterField = hideParameter(param, parameterField, !(request.responseText === "true"));
@@ -18,7 +18,7 @@ function processParameter(param, paramType) {
 /// hides parameter field if it is needed
 function hideParameter(param, parameterField, toHide){
     if (toHide){
-        var parameterField = AJS.MacroBrowser.ParameterFields["_hidden"](param, {});
+        const parameterField = AJS.MacroBrowser.ParameterFields["_hidden"](param, {});
 
         if (!parameterField.getValue()) {
             // by default placing null value
