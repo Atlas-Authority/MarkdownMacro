@@ -22,7 +22,24 @@
     <name>Markdown Macro for Confluence</name>
     <description>This plugin provides macros to render markdown for Confluence.</description>
     <packaging>atlassian-plugin</packaging>
-    
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <groupId>com.atlassian.platform.dependencies</groupId>
+                <artifactId>platform-public-api</artifactId>
+                <version>${platform.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+            <dependency>
+                <groupId>com.atlassian.platform.dependencies</groupId>
+                <artifactId>platform-deprecated-public-api</artifactId>
+                <version>${platform.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
     <dependencies>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -43,35 +60,30 @@
             <version>${atlassian.spring.scanner.version}</version>
             <scope>provided</scope>
         </dependency>
-        
-        <dependency>
-		  <groupId>com.atlassian.sal</groupId>
-		  <artifactId>sal-api</artifactId>
-		  <version>4.4.0</version>
-		  <scope>provided</scope>
-		</dependency>
-        <dependency>
-            <groupId>com.atlassian.plugins.rest</groupId>
-            <artifactId>atlassian-rest-v2-api</artifactId>
-            <version>8.0.1</version>
-            <scope>provided</scope>
-        </dependency>
         <dependency>
             <groupId>com.atlassian.confluence</groupId>
             <artifactId>confluence</artifactId>
             <version>${confluence.version}</version>
             <scope>provided</scope>
         </dependency>
+        <dependency>
+		  <groupId>com.atlassian.sal</groupId>
+		  <artifactId>sal-api</artifactId>
+		  <scope>provided</scope>
+		</dependency>
+        <dependency>
+            <groupId>com.atlassian.plugins.rest</groupId>
+            <artifactId>atlassian-rest-v2-api</artifactId>
+            <scope>provided</scope>
+        </dependency>
 
         <dependency>
             <groupId>jakarta.inject</groupId>
             <artifactId>jakarta.inject-api</artifactId>
-            <version>1.0.5</version>
         </dependency>
         <dependency>
             <groupId>jakarta.ws.rs</groupId>
             <artifactId>jakarta.ws.rs-api</artifactId>
-            <version>2.1.6</version>
         </dependency>
         <dependency>
             <groupId>com.vladsch.flexmark</groupId>
@@ -294,11 +306,12 @@
         <java.source.version>17</java.source.version>
         <java.target.version>17</java.target.version>
         <atlassian.plugin.key>com.atlassian.plugins.confluence.markdown.confluence-markdown-macro</atlassian.plugin.key>
-        <confluence.version>9.0.0-m92</confluence.version>
-        <confluence.data.version>9.0.0-m92</confluence.data.version>
+        <platform.version>7.0.5</platform.version>
+        <confluence.version>9.0.0-m97</confluence.version>
+        <confluence.data.version>9.0.0-m97</confluence.data.version>
         <amps.version>8.16.0</amps.version>
         <plugin.testrunner.version>2.0.6</plugin.testrunner.version>
-        <atlassian.spring.scanner.version>2.2.3</atlassian.spring.scanner.version>
+        <atlassian.spring.scanner.version>5.0.2</atlassian.spring.scanner.version>
         <flexmark.version>0.64.8</flexmark.version>
         <jackson.version>2.17.1</jackson.version>
     </properties>
