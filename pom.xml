@@ -307,8 +307,8 @@
         <java.target.version>17</java.target.version>
         <atlassian.plugin.key>com.atlassian.plugins.confluence.markdown.confluence-markdown-macro</atlassian.plugin.key>
         <platform.version>7.0.5</platform.version>
-        <confluence.version>9.0.0-m97</confluence.version>
-        <confluence.data.version>9.0.0-m97</confluence.data.version>
+        <confluence.version>9.0.0-m109</confluence.version>
+        <confluence.data.version>9.0.0-m109</confluence.data.version>
         <amps.version>8.16.0</amps.version>
         <plugin.testrunner.version>2.0.6</plugin.testrunner.version>
         <atlassian.spring.scanner.version>5.0.2</atlassian.spring.scanner.version>
