@@ -16,3 +16,11 @@ This macro supports the following languages:
 *   German
 
 This macro DOES NOT support inline HTML. This functionality was removed due to it being perceived as a security vulnerability.
+
+
+# Release workflow
+
+Create a new release based on the correct release branch and correct tag name.
+
+- release/1.6.x will target Confluence < 9. Eg create a release 1.6.30 with tag 1.6.30 on release/1.6.x
+- main will target Confluence >= 9.0, and should be tagged with 2.x.y. Eg create a release 2.0.0 with tag 2.0.0 on main
