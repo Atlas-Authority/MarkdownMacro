@@ -30,6 +30,9 @@ public class ResizableImageInlineParserExtension implements InlineParserExtensio
     @Override
     public boolean parse(@NotNull LightInlineParser inlineParser) {
         int index = inlineParser.getIndex();
+        if (index + 1 >= inlineParser.getInput().length()) {
+            return false;
+        }
         char c = inlineParser.getInput().charAt(index + 1);
         if (c == '[') {
             BasedSequence[] matches = inlineParser.matchWithGroups(IMAGE_PATTERN);

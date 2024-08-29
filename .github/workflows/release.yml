@@ -5,18 +5,34 @@ on:
     types: [created]
 
 jobs:
-  build:
-    name: Build tagged version
+  build_1_6:
+    name: Build tagged version for 1.6.x
     runs-on: ubuntu-latest
-
+    if: startsWith(github.event.release.tag_name, '1.6')
     steps:
       - name: Release
         uses: Atlas-Authority/atlassian-marketplace-release-action/release@main
         with:
-          branch: main
+          branch: release/1.6.x
+          jdkVersion: 11
           githubUserName: DevOps
           githubUserEmail: devops@atlasauthority.com
           githubToken: ${{ secrets.GHA_ADMIN }}
           marketplaceUser: devops@atlasauthority.com
           marketplaceToken: ${{ secrets.MARKETPLACE_TOKEN }}
-          mavenVersion: '3.8.5'
+
+  build_2_x:
+    name: Build tagged version for 2.x
+    runs-on: ubuntu-latest
+    if: startsWith(github.event.release.tag_name, '2.')
+    steps:
+      - name: Release
+        uses: Atlas-Authority/atlassian-marketplace-release-action/release@main
+        with:
+          branch: main
+          jdkVersion: 17
+          githubUserName: DevOps
+          githubUserEmail: devops@atlasauthority.com
+          githubToken: ${{ secrets.GHA_ADMIN }}
+          marketplaceUser: devops@atlasauthority.com
+          marketplaceToken: ${{ secrets.MARKETPLACE_TOKEN }}
