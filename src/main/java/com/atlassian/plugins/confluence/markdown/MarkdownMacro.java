@@ -6,8 +6,7 @@ import com.atlassian.confluence.content.render.xhtml.DefaultConversionContext;
 import com.atlassian.confluence.macro.Macro;
 import com.atlassian.confluence.macro.MacroExecutionException;
 import com.atlassian.confluence.setup.bandana.ConfluenceBandanaContext;
-import com.atlassian.confluence.xhtml.api.XhtmlContent;
-import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
+import com.atlassian.plugin.spring.scanner.annotation.imports.ConfluenceImport;
 import com.atlassian.plugins.confluence.markdown.ext.DevOpsResizableImage.ResizableImageExtension;
 import com.atlassian.renderer.RenderContext;
 import com.atlassian.renderer.v2.RenderMode;
@@ -31,7 +30,6 @@ import com.vladsch.flexmark.html.HtmlRenderer;
 import com.vladsch.flexmark.parser.Parser;
 import com.vladsch.flexmark.util.data.MutableDataSet;
 import com.vladsch.flexmark.util.misc.Extension;
-import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.Map;
 import java.util.ArrayList;
@@ -44,19 +42,18 @@ import org.jsoup.select.*;
 import org.owasp.html.HtmlPolicyBuilder;
 import org.owasp.html.PolicyFactory;
 
+import javax.inject.Inject;
+
 
 public class MarkdownMacro extends BaseMacro implements Macro {
-
-    private final XhtmlContent xhtmlUtils;
 
     private PageBuilderService pageBuilderService;
     private BandanaManager bandanaManager;
     private ConfluenceBandanaContext context = new ConfluenceBandanaContext("markdown-plugin");
 
-    @Autowired
-    public MarkdownMacro(@ComponentImport PageBuilderService pageBuilderService, @ComponentImport XhtmlContent xhtmlUtils, @ComponentImport BandanaManager bandanaManager) {
+    @Inject
+    public MarkdownMacro(@ConfluenceImport PageBuilderService pageBuilderService, @ConfluenceImport BandanaManager bandanaManager) {
         this.pageBuilderService = pageBuilderService;
-        this.xhtmlUtils = xhtmlUtils;
         this.bandanaManager = bandanaManager;
     }
 
