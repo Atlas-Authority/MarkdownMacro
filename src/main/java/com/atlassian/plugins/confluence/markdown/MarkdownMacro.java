@@ -136,7 +136,7 @@ public class MarkdownMacro extends BaseMacro implements Macro {
                 "        }\n"+
                 "};\n"+
                 "mermaid.initialize(config);\n"+
-                "window.mermaid.init(undefined, block);\n"+
+                "mermaid.init(undefined, block);\n"+
                 "  });\n" +
                 "</script>";
 
