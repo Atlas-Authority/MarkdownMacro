@@ -12,7 +12,7 @@
     
     <groupId>com.atlassian.plugins.confluence.markdown</groupId>
     <artifactId>confluence-markdown-macro</artifactId>
-    <version>1.6.27</version>
+    <version>1.6.28</version>
     
     <organization>
         <name>Atlas Authority</name>
@@ -22,7 +22,7 @@
     <name>Markdown Macro for Confluence</name>
     <description>This plugin provides macros to render markdown for Confluence.</description>
     <packaging>atlassian-plugin</packaging>
-    
+
     <dependencies>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
@@ -43,7 +43,7 @@
             <version>${atlassian.spring.scanner.version}</version>
             <scope>provided</scope>
         </dependency>
-        
+
         <dependency>
 		  <groupId>com.atlassian.sal</groupId>
 		  <artifactId>sal-api</artifactId>
