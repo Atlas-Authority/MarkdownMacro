@@ -31,7 +31,8 @@ class SpacePermissionService extends PermissionService<Space, Long> {
     List<Space> convert(Collection<PageData> pageDataList) {
         return pageDataList
                 .stream()
-                .map(PageData::getServerSpaceId)
+                .map(PageData::getSpaceServerId)
+                .map(Long::parseLong)
                 .collect(Collectors.toSet())
                 .stream()
                 .map(spaceManager::getSpace)

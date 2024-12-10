@@ -56,7 +56,7 @@ class UserService {
         final Helper helper = new Helper();
         for (PageData pageData : pageDataList) {
             final String cloudUserKey = helper.pickUserWhoHasEditPerm(pageData, spacePermissions, pageRestrictions, userMap);
-            pageData.setCloudUserKey(cloudUserKey);
+            pageData.setUserWithEditCloudId(cloudUserKey);
         }
     }
 
@@ -106,8 +106,8 @@ class UserService {
                 Map<String, PermData> pageRestrictions,
                 Map<String, String> userMap
         ) {
-            final long spaceId = pageData.getServerSpaceId();
-            final PermData pagePermission = pageRestrictions.getOrDefault(pageData.getServerId(), PermData.empty);
+            final long spaceId = Long.parseLong(pageData.getSpaceServerId());
+            final PermData pagePermission = pageRestrictions.getOrDefault(pageData.getPageServerId(), PermData.empty);
             final PermData spacePermission = spacePermissions.getOrDefault(spaceId, PermData.empty);
 
             Optional<UserKey> userKeyOpt;
