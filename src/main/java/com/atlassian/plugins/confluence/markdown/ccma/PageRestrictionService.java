@@ -43,7 +43,7 @@ class PageRestrictionService extends PermissionService<Content, String> {
     List<Content> convert(Collection<PageData> pageDataList) {
         return pageDataList
                 .stream()
-                .map(PageData::getPage)
+                .map(PageData::getPageContent)
                 .collect(Collectors.toList());
     }
 

@@ -92,12 +92,12 @@ class Migrator {
 
     private int uploadChunks() throws IOException {
         log.info("Start uploading data chunks");
-        final Map<Long, String> spaceMap = getMigratedSpaceMap();
+        final var spaceMap = getMigratedSpaceMap();
         int indexForLogging = 0;
         int totalNonEmptyChunks = 0;
-        for (final Map.Entry<Long, String> space : spaceMap.entrySet()) {
-            final long spaceId = space.getKey();
-            final String spaceKey = space.getValue();
+        for (final var space : spaceMap.entrySet()) {
+            final long spaceServerId = space.getKey();
+            final String spaceKey = space.getValue().spaceKey;
             final PageIterable<Content> cqlSearchIterable = PageIterable.cqlSearch(
                     cqlSearchService,
                     String.format("macro = \"markdown-from-url\" AND space = \"%s\"", spaceKey),
@@ -106,7 +106,7 @@ class Migrator {
             for (final PageResponse<Content> pages : cqlSearchIterable) {
                 log.info("Start searching pages for chunk #{} (space {})...", indexForLogging, spaceKey);
                 try {
-                    final List<PageData> pageDataList = buildPageDataList(spaceId, pages);
+                    final List<PageData> pageDataList = buildPageDataList(space.getValue(), pages);
                     if (!pageDataList.isEmpty()) {
                         uploadDataPayload(spaceKey, pageDataList, indexForLogging);
                         totalNonEmptyChunks++;
@@ -132,10 +132,16 @@ class Migrator {
             final ArrayNode cloudPageIdsNode = node.putArray("cloudPageId");
 
             for (PageData pageData : pageDataList) {
-                cloudPageIdsNode.add(pageData.getCloudId());
+                cloudPageIdsNode.add(pageData.getPageCloudId());
                 final ObjectNode page = pagesNode.addObject();
-                page.put("pageId", pageData.getCloudId());
-                page.put("accountId", pageData.getCloudUserKey());
+                page.put("pageCloudId", pageData.getPageCloudId());
+                page.put("pageServerId", pageData.getPageCloudId());
+
+                page.put("spaceCloudId", pageData.getSpaceCloudId());
+                page.put("spaceServerId", pageData.getSpaceServerId());
+                page.put("spaceKey", pageData.getSpaceKey());
+
+                page.put("userWithEditCloudId", pageData.getUserWithEditCloudId());
             }
 
             return node;
@@ -164,47 +170,55 @@ class Migrator {
      * Get migrated spaces that are actually exist at the time when migration is triggered.
      * @return a map of space ID to space key
      */
-    private Map<Long, String> getMigratedSpaceMap() {
+    private Map<Long, SpaceMapping> getMigratedSpaceMap() {
         log.info("Start get migrated space...");
 
         // Get all migrated spaces
-        final Set<String> migratedSpaceIds = new HashSet<>();
+        final var migratedSpaceCloudIdByServerIds = new HashMap<String, String>();
         final PaginatedMapping migratedSpaceIterator = gateway.getPaginatedMapping(transferId, "confluence:space", GET_MAPPING_SIZE);
         while (migratedSpaceIterator.next()) {
-            final Map<String, String> mappings = migratedSpaceIterator.getMapping();
-            migratedSpaceIds.addAll(mappings.keySet());
+            migratedSpaceCloudIdByServerIds.putAll(migratedSpaceIterator.getMapping());
         }
 
         // Get all current spaces on server side
-        final List<Space> spaces = new ArrayList<>();
-        final PageIterable<Space> spaceIterable = PageIterable.spaces(spaceService, FETCH_SPACE_SIZE);
-        for (final PageResponse<Space> spacePage : spaceIterable) {
-            spaces.addAll(spacePage.getResults());
+        final List<Space> serverSpaces = new ArrayList<>();
+        final var spaceIterable = PageIterable.spaces(spaceService, FETCH_SPACE_SIZE);
+        for (final var chunk : spaceIterable) {
+            serverSpaces.addAll(chunk.getResults());
         }
 
         // Filter out migrated spaces which actually exist
-        final Map<Long, String> spaceKeyMap = spaces.stream()
-                .filter(space -> migratedSpaceIds.contains(String.valueOf(space.getId())))
-                .collect(Collectors.toMap(Space::getId, Space::getKey, (p1, p2) -> p1));
+        final var migratedSpaceByServerIds = serverSpaces.stream()
+                .filter(space -> migratedSpaceCloudIdByServerIds.containsKey(String.valueOf(space.getId())))
+                .collect(Collectors.toMap(
+                        Space::getId,
+                        (space -> new SpaceMapping(
+                                migratedSpaceCloudIdByServerIds.get(String.valueOf(space.getId())),
+                                String.valueOf(space.getId()),
+                                space.getKey()
+                        )),
+                        (p1, p2) -> p1)
+                );
 
-        log.info("Migrated space keys: {}", String.join(", ", spaceKeyMap.values()));
-        return spaceKeyMap;
+        log.info("Migrated space keys: {}", migratedSpaceByServerIds);
+        return migratedSpaceByServerIds;
     }
 
     /**
      * Build java model of the upload payload.
      */
-    private List<PageData> buildPageDataList(long spaceId, PageResponse<Content> pages) {
+    private List<PageData> buildPageDataList(SpaceMapping space, PageResponse<Content> pages) {
         log.info("Start build page data list...");
-        final Map<String, Content> serverPageById = pages.getResults().stream().collect(Collectors.toMap(
-                page -> String.valueOf(page.getId().asLong()),
-                Function.identity(),
-                (p1, p2) -> p1
-        ));
+        final var pageByServerIds = pages.getResults()
+                .stream()
+                .collect(Collectors.toMap(
+                        page -> String.valueOf(page.getId().asLong()),
+                        Function.identity(),
+                        (p1, p2) -> p1
+                ));
 
-        final Set<String> serverPageIds = serverPageById.keySet();
-
-        final Map<String, String> mappings = ListUtils.partition(new ArrayList<>(serverPageIds), 100).stream()
+        final Map<String, String> mappings = ListUtils.partition(new ArrayList<>(pageByServerIds.keySet()), 100)
+                .stream()
                 .map(HashSet::new)
                 .map(subServerPageIds -> gateway.getMappingById(transferId, "confluence:page", subServerPageIds))
                 .map(Map::entrySet)
@@ -215,8 +229,15 @@ class Migrator {
                 .map(entry -> {
                     final String serverPageId = entry.getKey();
                     final String cloudPageId = entry.getValue();
-                    final Optional<Content> pageOpt = Optional.ofNullable(serverPageById.get(serverPageId));
-                    return pageOpt.map(page -> new PageData(serverPageId, cloudPageId, spaceId, page));
+                    final Optional<Content> pageOpt = Optional.ofNullable(pageByServerIds.get(serverPageId));
+                    return pageOpt.map(page -> new PageData(
+                            cloudPageId,
+                            serverPageId,
+                            space.spaceCloudId,
+                            space.spaceServerId,
+                            space.spaceKey,
+                            page
+                    ));
                 })
                 .filter(Optional::isPresent)
                 .map(Optional::get)
@@ -301,5 +322,38 @@ class Migrator {
                 "Created At: " + migrationDetails.getCreatedAt(),
                 throwable
         );
+    }
+
+    private static class SpaceMapping {
+
+        final String spaceCloudId;
+        final String spaceServerId;
+        final String spaceKey;
+
+        SpaceMapping(String spaceCloudId, String spaceServerId, String spaceKey) {
+            this.spaceCloudId = spaceCloudId;
+            this.spaceServerId = spaceServerId;
+            this.spaceKey = spaceKey;
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            if (!(o instanceof SpaceMapping that)) return false;
+            return Objects.equals(spaceCloudId, that.spaceCloudId) && Objects.equals(spaceServerId, that.spaceServerId) && Objects.equals(spaceKey, that.spaceKey);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(spaceCloudId, spaceServerId, spaceKey);
+        }
+
+        @Override
+        public String toString() {
+            return "SpaceMapping{" +
+                    "spaceCloudId='" + spaceCloudId + '\'' +
+                    ", spaceServerId='" + spaceServerId + '\'' +
+                    ", spaceKey='" + spaceKey + '\'' +
+                    '}';
+        }
     }
 }
