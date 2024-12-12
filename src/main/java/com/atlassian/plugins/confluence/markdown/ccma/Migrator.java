@@ -338,7 +338,8 @@ class Migrator {
 
         @Override
         public boolean equals(Object o) {
-            if (!(o instanceof SpaceMapping that)) return false;
+            if (!(o instanceof SpaceMapping)) return false;
+            final var that = (SpaceMapping) o;
             return Objects.equals(spaceCloudId, that.spaceCloudId) && Objects.equals(spaceServerId, that.spaceServerId) && Objects.equals(spaceKey, that.spaceKey);
         }
 
