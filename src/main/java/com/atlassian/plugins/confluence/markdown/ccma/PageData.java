@@ -3,40 +3,55 @@ package com.atlassian.plugins.confluence.markdown.ccma;
 import com.atlassian.confluence.api.model.content.Content;
 
 class PageData {
-    private final String serverId;
-    private final String cloudId;
-    private final long serverSpaceId;
-    private final Content page;
-    private String cloudUserKey;
+    private final String pageCloudId;
+    private final String pageServerId;
 
-    PageData(String serverId, String cloudId, long serverSpaceId, Content page) {
-        this.serverId = serverId;
-        this.cloudId = cloudId;
-        this.serverSpaceId = serverSpaceId;
-        this.page = page;
+    private final String spaceCloudId;
+    private final String spaceServerId;
+    private final String spaceKey;
+
+    private final Content pageContent;
+
+    private String userWithEditCloudId;
+
+    public PageData(String pageCloudId, String pageServerId, String spaceCloudId, String spaceServerId, String spaceKey, Content pageContent) {
+        this.pageCloudId = pageCloudId;
+        this.pageServerId = pageServerId;
+        this.spaceCloudId = spaceCloudId;
+        this.spaceServerId = spaceServerId;
+        this.spaceKey = spaceKey;
+        this.pageContent = pageContent;
     }
 
-    String getServerId() {
-        return serverId;
+    public String getPageCloudId() {
+        return pageCloudId;
     }
 
-    String getCloudId() {
-        return cloudId;
+    public String getPageServerId() {
+        return pageServerId;
     }
 
-    long getServerSpaceId() {
-        return serverSpaceId;
+    public String getSpaceCloudId() {
+        return spaceCloudId;
     }
 
-    Content getPage() {
-        return page;
+    public String getSpaceServerId() {
+        return spaceServerId;
     }
 
-    String getCloudUserKey() {
-        return cloudUserKey;
+    public String getSpaceKey() {
+        return spaceKey;
     }
 
-    void setCloudUserKey(String cloudUserKey) {
-        this.cloudUserKey = cloudUserKey;
+    public Content getPageContent() {
+        return pageContent;
+    }
+
+    public String getUserWithEditCloudId() {
+        return userWithEditCloudId;
+    }
+
+    public void setUserWithEditCloudId(String userWithEditCloudId) {
+        this.userWithEditCloudId = userWithEditCloudId;
     }
 }
