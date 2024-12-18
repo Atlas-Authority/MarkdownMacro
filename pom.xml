@@ -268,7 +268,7 @@
             <plugin>
                 <groupId>org.owasp</groupId>
                 <artifactId>dependency-check-maven</artifactId>
-                <version>9.0.8</version>
+                <version>11.1.1</version>
                 <executions>
                     <execution>
                         <goals>
@@ -282,6 +282,7 @@
                     <nodeAnalyzerEnabled>false</nodeAnalyzerEnabled>
                     <nodeAuditAnalyzerEnabled>false</nodeAuditAnalyzerEnabled>
                     <nvdApiKey>ca1b73a6-7ed0-4a71-922a-2147036a4c33</nvdApiKey>
+                    <nvdApiDelay>8000</nvdApiDelay>
                     <suppressionFiles>
                         <suppressionFile>
                             https://dcapt-downloads.s3.amazonaws.com/atlassian-security-scanner-dc-apps-suppressions.xml
