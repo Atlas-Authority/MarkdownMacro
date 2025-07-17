@@ -90,7 +90,7 @@
     </web-resource>
     
     <web-resource key="mermaidjs" name="mermaid.js" >
-        <resource type="download" name="mermaid.min.js" location="js/mermaid/11.2.1/mermaid.min.js"/>
+        <resource type="download" name="mermaid.min.js" location="js/mermaid/11.9.0/mermaid.min.js"/>
     </web-resource>
     
     <web-resource key="markdown-configure-resources" name="Markdown Admin Configuration Resources">
