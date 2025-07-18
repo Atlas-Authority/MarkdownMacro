@@ -12,7 +12,7 @@
     
     <groupId>com.atlassian.plugins.confluence.markdown</groupId>
     <artifactId>confluence-markdown-macro</artifactId>
-    <version>2.0.2</version>
+    <version>2.0.3</version>
     
     <organization>
         <name>Atlas Authority</name>
