@@ -92,10 +92,10 @@ class Migrator {
 
     private int uploadChunks() throws IOException {
         log.info("Start uploading data chunks");
-        final var spaceMap = getMigratedSpaceMap();
+        final Map<Long, SpaceMapping> spaceMap = getMigratedSpaceMap();
         int indexForLogging = 0;
         int totalNonEmptyChunks = 0;
-        for (final var space : spaceMap.entrySet()) {
+        for (final Map.Entry<Long, SpaceMapping> space : spaceMap.entrySet()) {
             final long spaceServerId = space.getKey();
             final String spaceKey = space.getValue().spaceKey;
             final PageIterable<Content> cqlSearchIterable = PageIterable.cqlSearch(
@@ -174,7 +174,7 @@ class Migrator {
         log.info("Start get migrated space...");
 
         // Get all migrated spaces
-        final var migratedSpaceCloudIdByServerIds = new HashMap<String, String>();
+        final HashMap<String, String> migratedSpaceCloudIdByServerIds = new HashMap<String, String>();
         final PaginatedMapping migratedSpaceIterator = gateway.getPaginatedMapping(transferId, "confluence:space", GET_MAPPING_SIZE);
         while (migratedSpaceIterator.next()) {
             migratedSpaceCloudIdByServerIds.putAll(migratedSpaceIterator.getMapping());
@@ -182,13 +182,13 @@ class Migrator {
 
         // Get all current spaces on server side
         final List<Space> serverSpaces = new ArrayList<>();
-        final var spaceIterable = PageIterable.spaces(spaceService, FETCH_SPACE_SIZE);
-        for (final var chunk : spaceIterable) {
+        final PageIterable<Space> spaceIterable = PageIterable.spaces(spaceService, FETCH_SPACE_SIZE);
+        for (final PageResponse<Space> chunk : spaceIterable) {
             serverSpaces.addAll(chunk.getResults());
         }
 
         // Filter out migrated spaces which actually exist
-        final var migratedSpaceByServerIds = serverSpaces.stream()
+        final Map<Long, SpaceMapping> migratedSpaceByServerIds = serverSpaces.stream()
                 .filter(space -> migratedSpaceCloudIdByServerIds.containsKey(String.valueOf(space.getId())))
                 .collect(Collectors.toMap(
                         Space::getId,
@@ -209,7 +209,7 @@ class Migrator {
      */
     private List<PageData> buildPageDataList(SpaceMapping space, PageResponse<Content> pages) {
         log.info("Start build page data list...");
-        final var pageByServerIds = pages.getResults()
+        final Map<String, Content> pageByServerIds = pages.getResults()
                 .stream()
                 .collect(Collectors.toMap(
                         page -> String.valueOf(page.getId().asLong()),
@@ -339,7 +339,7 @@ class Migrator {
         @Override
         public boolean equals(Object o) {
             if (!(o instanceof SpaceMapping)) return false;
-            final var that = (SpaceMapping) o;
+            final SpaceMapping that = (SpaceMapping) o;
             return Objects.equals(spaceCloudId, that.spaceCloudId) && Objects.equals(spaceServerId, that.spaceServerId) && Objects.equals(spaceKey, that.spaceKey);
         }
 
