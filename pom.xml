@@ -192,6 +192,8 @@
                     <jvmArgs>-Xms1g -Xmx2g -server</jvmArgs>
                     <systemPropertyVariables>
                         <upm.plugin.upload.enabled>true</upm.plugin.upload.enabled>
+                        <!-- set to false if you want to test app signing -->
+                        <atlassian.upm.signature.check.disabled>true</atlassian.upm.signature.check.disabled>
                     </systemPropertyVariables>
                     <libArtifactsString>org.postgresql:postgresql:42.7.0</libArtifactsString>
 
