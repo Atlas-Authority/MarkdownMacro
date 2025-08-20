@@ -102,22 +102,25 @@
         <context>markdown-configure-resources</context>
     </web-resource>
 
-    <xwork key="configure-markdown-macro" name="Configure Markdown Macro">
+    <struts key="configure-markdown-macro" name="Configure Markdown Macro">
         <package name="markdown" extends="default" namespace="/admin/plugins/markdown">
             <default-interceptor-ref name="defaultStack" />
-            <action name="config" class="com.atlassian.plugins.confluence.markdown.configuration.PluginAdminGetConfigurationAction" method="doDefault">
+            <action name="config"
+                    class="com.atlassian.plugins.confluence.markdown.configuration.PluginAdminGetConfigurationAction"
+                    method="doDefault">
                 <result name="input" type="velocity">/markdown-macro-config.vm</result>
             </action>
 
-            <action name="set" class="com.atlassian.plugins.confluence.markdown.configuration.PluginAdminSaveConfigurationAction" method="execute">
+            <action name="set"
+                    class="com.atlassian.plugins.confluence.markdown.configuration.PluginAdminSaveConfigurationAction"
+                    method="execute">
                 <interceptor-ref name="validatingStack"/>
                 <param name="RequireSecurityToken">true</param>
-
                 <result name="input" type="velocity">/xsrf-error.vm</result>
                 <result name="success" type="redirect">/admin/plugins/markdown/config.action</result>
             </action>
         </package>
-    </xwork>
+    </struts>
 
     <rest-migration key="rest-migration-key">
         <rest-v2/>
