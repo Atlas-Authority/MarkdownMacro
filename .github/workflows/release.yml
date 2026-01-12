@@ -9,6 +9,8 @@ jobs:
     name: Build tagged version for 1.6.x
     runs-on: ubuntu-latest
     if: startsWith(github.event.release.tag_name, '1.6.')
+    permissions:
+      contents: write
     steps:
       - name: Release
         uses: Atlas-Authority/atlassian-marketplace-release-action/release@main
@@ -25,6 +27,8 @@ jobs:
     name: Build tagged version for 2.x
     runs-on: ubuntu-latest
     if: startsWith(github.event.release.tag_name, '2.')
+    permissions:
+      contents: write
     steps:
       - name: Release
         uses: Atlas-Authority/atlassian-marketplace-release-action/release@main
@@ -41,6 +45,8 @@ jobs:
     name: Build tagged version for 3.x
     runs-on: ubuntu-latest
     if: startsWith(github.event.release.tag_name, '3.')
+    permissions:
+      contents: write
     steps:
       - name: Release
         uses: Atlas-Authority/atlassian-marketplace-release-action/release@main
