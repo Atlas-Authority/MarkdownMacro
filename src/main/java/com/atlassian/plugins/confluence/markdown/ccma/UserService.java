@@ -3,7 +3,7 @@ package com.atlassian.plugins.confluence.markdown.ccma;
 import com.atlassian.confluence.user.ConfluenceUser;
 import com.atlassian.confluence.user.UserAccessor;
 import com.atlassian.migration.app.PaginatedMapping;
-import com.atlassian.migration.app.gateway.AppCloudMigrationGateway;
+import com.atlassian.migration.app.gateway.AppCloudForgeMigrationGateway;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ConfluenceImport;
 import com.atlassian.sal.api.user.UserKey;
 import com.atlassian.user.Group;
@@ -44,12 +44,12 @@ class UserService {
     /**
      * Populate a use who has edit permission for each page.
      */
-    void enrichCloudUser(AppCloudMigrationGateway gateway, String transferId, List<PageData> pageDataList) {
+    void enrichCloudUser(AppCloudForgeMigrationGateway gateway, List<PageData> pageDataList) {
         if (pageDataList.isEmpty()) {
             return;
         }
 
-        final Map<String, String> userMap = getUserMap(gateway, transferId);
+        final Map<String, String> userMap = getUserMap(gateway);
         final Map<Long, PermData> spacePermissions = spacePermissionService.getPermissions(pageDataList);
         final Map<String, PermData> pageRestrictions = pageRestrictionService.getPermissions(pageDataList);
 
@@ -63,9 +63,9 @@ class UserService {
     /**
      * User mapping from server id to cloud id.
      */
-    private Map<String, String> getUserMap(AppCloudMigrationGateway gateway, String transferId) {
-        return userMapCache.computeIfAbsent(transferId, (String sid) -> {
-            final PaginatedMapping paginatedMapping = gateway.getPaginatedMapping(sid, "identity:user", BATCH_SIZE);
+    private Map<String, String> getUserMap(AppCloudForgeMigrationGateway gateway) {
+        return userMapCache.computeIfAbsent(gateway.getTransferId(), (String sid) -> {
+            final PaginatedMapping paginatedMapping = gateway.getPaginatedMapping("identity:user", BATCH_SIZE);
             final Map<String, String> results = new HashMap<>();
             while (paginatedMapping.next()) {
                 final Map<String, String> mappings = paginatedMapping.getMapping();
