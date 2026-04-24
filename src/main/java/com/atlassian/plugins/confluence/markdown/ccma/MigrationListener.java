@@ -4,9 +4,9 @@ import com.atlassian.confluence.api.service.content.SpaceService;
 import com.atlassian.confluence.api.service.search.CQLSearchService;
 import com.atlassian.confluence.user.UserAccessor;
 import com.atlassian.migration.app.*;
-import com.atlassian.migration.app.gateway.AppCloudMigrationGateway;
+import com.atlassian.migration.app.gateway.AppCloudForgeMigrationGateway;
 import com.atlassian.migration.app.gateway.MigrationDetailsV1;
-import com.atlassian.migration.app.listener.DiscoverableListener;
+import com.atlassian.migration.app.listener.DiscoverableForgeListener;
 import com.atlassian.plugin.spring.scanner.annotation.export.ExportAsService;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ConfluenceImport;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,7 +19,7 @@ import static com.atlassian.migration.app.AccessScope.*;
 
 @Named
 @ExportAsService
-public class MigrationListener implements DiscoverableListener {
+public class MigrationListener implements DiscoverableForgeListener {
 
     private final SpaceService spaceService;
     private final CQLSearchService cqlSearchService;
@@ -43,7 +43,7 @@ public class MigrationListener implements DiscoverableListener {
     }
 
     @Override
-    public void onStartAppMigration(AppCloudMigrationGateway gateway, String transferId, MigrationDetailsV1 migrationDetails) {
+    public void onStartAppMigration(AppCloudForgeMigrationGateway gateway, MigrationDetailsV1 migrationDetails) {
         new Migrator(
                 spaceService,
                 cqlSearchService,
@@ -51,7 +51,6 @@ public class MigrationListener implements DiscoverableListener {
                 serverAppVersion,
                 userService,
                 gateway,
-                transferId,
                 migrationDetails
         ).migrate();
     }
@@ -73,5 +72,15 @@ public class MigrationListener implements DiscoverableListener {
         accessScopes.add(MIGRATION_TRACING_PRODUCT);
         accessScopes.add(MIGRATION_TRACING_IDENTITY);
         return Collections.unmodifiableSet(accessScopes);
+    }
+
+    @Override
+    public UUID getForgeAppId() {
+        return UUID.fromString("7dc8a3ac-0e9e-4564-8e1a-098386c53e02");
+    }
+
+    @Override
+    public String getForgeEnvironmentName() {
+        return ForgeEnvironmentName.PRODUCTION;
     }
 }
