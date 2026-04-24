@@ -8,7 +8,7 @@ import com.atlassian.confluence.user.AuthenticatedUserThreadLocal;
 import com.atlassian.confluence.user.ConfluenceUser;
 import com.atlassian.confluence.user.UserAccessor;
 import com.atlassian.migration.app.PaginatedMapping;
-import com.atlassian.migration.app.gateway.AppCloudMigrationGateway;
+import com.atlassian.migration.app.gateway.AppCloudForgeMigrationGateway;
 import com.atlassian.migration.app.gateway.MigrationDetailsV1;
 import com.atlassian.user.Group;
 import dev.failsafe.Failsafe;
@@ -44,8 +44,7 @@ class Migrator {
     private final String serverAppVersion;
     private final UserService userService;
 
-    private final AppCloudMigrationGateway gateway;
-    private final String transferId;
+    private final AppCloudForgeMigrationGateway gateway;
     private final MigrationDetailsV1 migrationDetails;
 
     Migrator(
@@ -54,8 +53,7 @@ class Migrator {
             UserAccessor userAccessor,
             String serverAppVersion,
             UserService userService,
-            AppCloudMigrationGateway gateway,
-            String transferId,
+            AppCloudForgeMigrationGateway gateway,
             MigrationDetailsV1 migrationDetails
     ) {
         this.spaceService = spaceService;
@@ -64,7 +62,6 @@ class Migrator {
         this.serverAppVersion = serverAppVersion;
         this.userService = userService;
         this.gateway = gateway;
-        this.transferId = transferId;
         this.migrationDetails = migrationDetails;
     }
 
@@ -75,6 +72,7 @@ class Migrator {
             uploadStartingPayload();
             int totalNonEmptyChunks = uploadChunks();
             uploadEndingPayload(totalNonEmptyChunks);
+            gateway.completeExport();
         } catch (Exception e) {
             logErrorMigrationDetails("Error while running app migration", e);
         }
@@ -175,7 +173,7 @@ class Migrator {
 
         // Get all migrated spaces
         final HashMap<String, String> migratedSpaceCloudIdByServerIds = new HashMap<String, String>();
-        final PaginatedMapping migratedSpaceIterator = gateway.getPaginatedMapping(transferId, "confluence:space", GET_MAPPING_SIZE);
+        final PaginatedMapping migratedSpaceIterator = gateway.getPaginatedMapping("confluence:space", GET_MAPPING_SIZE);
         while (migratedSpaceIterator.next()) {
             migratedSpaceCloudIdByServerIds.putAll(migratedSpaceIterator.getMapping());
         }
@@ -220,7 +218,7 @@ class Migrator {
         final Map<String, String> mappings = ListUtils.partition(new ArrayList<>(pageByServerIds.keySet()), 100)
                 .stream()
                 .map(HashSet::new)
-                .map(subServerPageIds -> gateway.getMappingById(transferId, "confluence:page", subServerPageIds))
+                .map(subServerPageIds -> gateway.getMappingById("confluence:page", subServerPageIds))
                 .map(Map::entrySet)
                 .flatMap(Set::stream)
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
@@ -243,7 +241,7 @@ class Migrator {
                 .map(Optional::get)
                 .collect(Collectors.toList());
 
-        userService.enrichCloudUser(gateway, transferId, pageDataList);
+        userService.enrichCloudUser(gateway, pageDataList);
 
         return pageDataList;
     }
@@ -269,7 +267,7 @@ class Migrator {
                 .build();
 
         Failsafe.with(retryPolicy).run(() -> {
-            final OutputStream outputStream = gateway.createAppData(transferId, label);
+            final OutputStream outputStream = gateway.createAppData(label);
             outputStream.write(data);
             outputStream.close();
         });
@@ -301,7 +299,7 @@ class Migrator {
         log.info("{}: \n\t{}\n\t{}\n\t{}\n\t{}\n\t{}\n\t{}\n\t{}",
                 message,
                 "Name: " + migrationDetails.getName(),
-                "Transfer ID: " + transferId,
+                "Transfer ID: " + gateway.getTransferId(),
                 "Cloud Url: " + migrationDetails.getCloudUrl(),
                 "Migration ID: " + migrationDetails.getMigrationId(),
                 "Migration Scope ID: " + migrationDetails.getMigrationScopeId(),
@@ -314,7 +312,7 @@ class Migrator {
         log.error("{}: \n\t{}\n\t{}\n\t{}\n\t{}\n\t{}\n\t{}\n\t{}",
                 message,
                 "Name: " + migrationDetails.getName(),
-                "Transfer ID: " + transferId,
+                "Transfer ID: " + gateway.getTransferId(),
                 "Cloud Url: " + migrationDetails.getCloudUrl(),
                 "Migration ID: " + migrationDetails.getMigrationId(),
                 "Migration Scope ID: " + migrationDetails.getMigrationScopeId(),
