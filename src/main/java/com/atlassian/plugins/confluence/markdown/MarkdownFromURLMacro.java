@@ -247,9 +247,15 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
                     "        return rect.width > 0 && rect.height > 0;\n" +
                     "    }\n" +
                     "    function renderBlock(block) {\n" +
-                    "        if (block.getAttribute('data-mermaid-rendered') === 'true') return;\n" +
+                    "        if (block.getAttribute('data-mermaid-rendered') === 'true') return true;\n" +
                     "        block.setAttribute('data-mermaid-rendered', 'true');\n" +
-                    "        window.mermaid.init(undefined, block);\n" +
+                    "        try {\n" +
+                    "            window.mermaid.init(undefined, block);\n" +
+                    "            return true;\n" +
+                    "        } catch (e) {\n" +
+                    "            block.removeAttribute('data-mermaid-rendered');\n" +
+                    "            return false;\n" +
+                    "        }\n" +
                     "    }\n" +
                     "    var pending = [];\n" +
                     "    AJS.$('[data-macro-name=\"markdown-from-url\"] .language-mermaid').each(function(i, block) {\n" +
@@ -263,8 +269,7 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
                     "        var observer = new MutationObserver(function() {\n" +
                     "            pending = pending.filter(function(block) {\n" +
                     "                if (isRenderable(block)) {\n" +
-                    "                    renderBlock(block);\n" +
-                    "                    return false;\n" +
+                    "                    return !renderBlock(block);\n" +
                     "                }\n" +
                     "                return true;\n" +
                     "            });\n" +
