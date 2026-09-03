@@ -73,6 +73,7 @@ public class MarkdownMacro extends BaseMacro implements Macro {
 
     	pageBuilderService.assembler().resources().requireWebResource("com.atlassian.plugins.confluence.markdown.confluence-markdown-macro:highlightjs");
        	pageBuilderService.assembler().resources().requireWebResource("com.atlassian.plugins.confluence.markdown.confluence-markdown-macro:mermaidjs");
+       	pageBuilderService.assembler().resources().requireWebResource("com.atlassian.plugins.confluence.markdown.confluence-markdown-macro:markdown-mermaid-render");
 
 		MutableDataSet options = new MutableDataSet()
 			.set(HtmlRenderer.GENERATE_HEADER_ID, true)
@@ -125,60 +126,7 @@ public class MarkdownMacro extends BaseMacro implements Macro {
                 "</style>";
 
         String rendermermaidjs ="<script>\n" +
-                "(function() {\n" +
-                "    var config = {\n" +
-                "        securityLevel:'sandbox',\n" +
-                "        startOnLoad:false,\n" +
-                "        theme:'default',\n" +
-                "        flowchart:{\n" +
-                "            useMaxWidth:false,\n" +
-                "            htmlLabels:true\n" +
-                "        }\n" +
-                "    };\n" +
-                "    mermaid.initialize(config);\n" +
-                "    function isRenderable(el) {\n" +
-                "        if (!el || !el.offsetParent) return false;\n" +
-                "        var rect = el.getBoundingClientRect();\n" +
-                "        return rect.width > 0 && rect.height > 0;\n" +
-                "    }\n" +
-                "    function renderBlock(block) {\n" +
-                "        if (block.getAttribute('data-mermaid-rendered') === 'true') return true;\n" +
-                "        block.setAttribute('data-mermaid-rendered', 'true');\n" +
-                "        try {\n" +
-                "            mermaid.init(undefined, block);\n" +
-                "            return true;\n" +
-                "        } catch (e) {\n" +
-                "            block.removeAttribute('data-mermaid-rendered');\n" +
-                "            return false;\n" +
-                "        }\n" +
-                "    }\n" +
-                "    var pending = [];\n" +
-                "    AJS.$('[data-macro-name=\"markdown\"] .language-mermaid').each(function(i, block) {\n" +
-                "        if (isRenderable(block)) {\n" +
-                "            renderBlock(block);\n" +
-                "        } else {\n" +
-                "            pending.push(block);\n" +
-                "        }\n" +
-                "    });\n" +
-                "    if (pending.length) {\n" +
-                "        var observer = new MutationObserver(function() {\n" +
-                "            pending = pending.filter(function(block) {\n" +
-                "                if (isRenderable(block)) {\n" +
-                "                    return !renderBlock(block);\n" +
-                "                }\n" +
-                "                return true;\n" +
-                "            });\n" +
-                "            if (!pending.length) {\n" +
-                "                observer.disconnect();\n" +
-                "            }\n" +
-                "        });\n" +
-                "        observer.observe(document.body, {\n" +
-                "            attributes:true,\n" +
-                "            attributeFilter:['class','style'],\n" +
-                "            subtree:true\n" +
-                "        });\n" +
-                "    }\n" +
-                "})();\n" +
+                "if (window.MarkdownMermaidRenderer) { window.MarkdownMermaidRenderer.renderAll('markdown'); }\n" +
                 "</script>";
 
         Parser parser = Parser.builder(options).build();

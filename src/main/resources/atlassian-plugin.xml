@@ -92,7 +92,13 @@
     <web-resource key="mermaidjs" name="mermaid.js" >
         <resource type="download" name="mermaid.min.js" location="js/mermaid/11.9.0/mermaid.min.js"/>
     </web-resource>
-    
+
+    <web-resource key="markdown-mermaid-render" name="Markdown Mermaid Render" >
+        <dependency>com.atlassian.auiplugin:ajs</dependency>
+        <dependency>com.atlassian.plugins.confluence.markdown.confluence-markdown-macro:mermaidjs</dependency>
+        <resource type="download" name="markdown-mermaid-render.js" location="js/markdown-mermaid-render.js"/>
+    </web-resource>
+
     <web-resource key="markdown-configure-resources" name="Markdown Admin Configuration Resources">
         <dependency>com.atlassian.auiplugin:ajs</dependency>
 
