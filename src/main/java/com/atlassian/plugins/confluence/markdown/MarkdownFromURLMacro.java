@@ -199,6 +199,7 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 
 			pageBuilderService.assembler().resources().requireWebResource("com.atlassian.plugins.confluence.markdown.confluence-markdown-macro:highlightjs");
       	    pageBuilderService.assembler().resources().requireWebResource("com.atlassian.plugins.confluence.markdown.confluence-markdown-macro:mermaidjs");
+      	    pageBuilderService.assembler().resources().requireWebResource("com.atlassian.plugins.confluence.markdown.confluence-markdown-macro:markdown-mermaid-render");
 
 			MutableDataSet options = new MutableDataSet()
 				.set(HtmlRenderer.GENERATE_HEADER_ID, true)
@@ -230,19 +231,7 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 					"</style>";
                     
             String rendermermaidjs ="<script>\n" +
-                    "AJS.$('[data-macro-name=\"markdown-from-url\"] .language-mermaid').each(function(i, block) {\n" +
-                    "const config = {\n"+
-					"    securityLevel:'sandbox',\n"+
-                    "    startOnLoad:true,\n"+
-                    "    theme: 'default',\n"+
-                    "    flowchart:{\n"+
-                    "            useMaxWidth:false,\n"+
-                    "            htmlLabels:true\n"+
-                    "        }\n"+
-                    "};\n"+
-                    "mermaid.initialize(config);\n"+
-                    "window.mermaid.init(undefined, block);\n"+
-                    "  });\n" +
+                    "if (window.MarkdownMermaidRenderer) { window.MarkdownMermaidRenderer.renderAll('markdown-from-url'); }\n" +
                     "</script>";
 
 			URL importFrom = null;
