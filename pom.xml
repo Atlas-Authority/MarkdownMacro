@@ -84,6 +84,7 @@
         </dependency>
         <dependency>
             <groupId>jakarta.ws.rs</groupId>
+            <version>3.1.0</version>
             <artifactId>jakarta.ws.rs-api</artifactId>
             <scope>provided</scope>
         </dependency>
