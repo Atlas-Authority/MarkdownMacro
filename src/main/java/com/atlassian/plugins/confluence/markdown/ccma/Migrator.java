@@ -22,6 +22,8 @@ import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.function.Function;
@@ -37,6 +39,10 @@ class Migrator {
     private static final String DATA_PAYLOAD = "DATA_PAYLOAD";
     private static final String DATA_ERROR_PAYLOAD = "DATA_ERROR_PAYLOAD";
     private static final String ENDING_PAYLOAD = "ENDING_PAYLOAD";
+    private static final String HEARTBEAT = "HEARTBEAT_PAYLOAD";
+    // CCMA settles a transfer after 15 minutes without app data upload, so beat well within that
+    private static final Duration HEARTBEAT_INTERVAL = Duration.ofMinutes(5);
+    private static final Duration HEARTBEAT_TIMEOUT = Duration.ofHours(2);
 
     private final SpaceService spaceService;
     private final CQLSearchService cqlSearchService;
@@ -67,7 +73,8 @@ class Migrator {
 
     void migrate() {
         logMigrationDetails("Markdown macro migration context summary");
-        try {
+        // Closed on both success and failure, as the migration is settled once migrate() returns or throws
+        try (MigrationHeartbeat ignored = new MigrationHeartbeat(this::uploadHeartbeat, HEARTBEAT_INTERVAL, HEARTBEAT_TIMEOUT).start()) {
             setAdminUser();
             uploadStartingPayload();
             int totalNonEmptyChunks = uploadChunks();
@@ -153,6 +160,14 @@ class Migrator {
             node.put("totalNonEmptyChunks", totalNonEmptyChunks);
             return node;
         });
+    }
+
+    /**
+     * Keep the transfer alive with an empty JSON payload.
+     */
+    private void uploadHeartbeat() {
+        log.info("Start uploading heartbeat...");
+        upload(HEARTBEAT, "{}".getBytes(StandardCharsets.UTF_8));
     }
 
     private void uploadErrorPayload(int index, Exception e) throws IOException {
