@@ -17,7 +17,8 @@ import java.util.stream.StreamSupport;
 @Named
 class UserService {
     private static final String USER_MAPPING_PREFIX = "confluence.userkey/";
-    private static final int BATCH_SIZE = 5;
+    // Maximum page size allowed by the mapping API
+    private static final int BATCH_SIZE = 5000;
 
     private final UserAccessor userAccessor;
     private final SpacePermissionService spacePermissionService;
