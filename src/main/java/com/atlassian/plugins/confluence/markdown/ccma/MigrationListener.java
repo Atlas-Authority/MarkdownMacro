@@ -67,7 +67,7 @@ public class MigrationListener implements DiscoverableForgeListener {
 
     @Override
     public Set<AccessScope> getDataAccessScopes() {
-        final Set<AccessScope> accessScopes = new HashSet<>();
+        final var accessScopes = new HashSet<AccessScope>();
         accessScopes.add(APP_DATA_OTHER);
         accessScopes.add(MIGRATION_TRACING_PRODUCT);
         accessScopes.add(MIGRATION_TRACING_IDENTITY);
@@ -81,6 +81,7 @@ public class MigrationListener implements DiscoverableForgeListener {
 
     @Override
     public String getForgeEnvironmentName() {
-        return ForgeEnvironmentName.PRODUCTION;
+//        return ForgeEnvironmentName.PRODUCTION;
+        return "staging";
     }
 }

@@ -18,7 +18,7 @@ class MarkdownConfigStoreTest {
 
     @Test
     void newNamespaceWins() {
-        FakePluginSettingsFactory factory = new FakePluginSettingsFactory();
+        final var factory = new FakePluginSettingsFactory();
         factory.settings(MarkdownConfigStore.NAMESPACE).put(MarkdownConfigStore.CONFIG_KEY, NEW_JSON);
         factory.settings(MarkdownConfigStore.LEGACY_NAMESPACE).put(MarkdownConfigStore.CONFIG_KEY, LEGACY_JSON);
 
@@ -28,7 +28,7 @@ class MarkdownConfigStoreTest {
 
     @Test
     void legacyValueIsUsedAndMigratedForwardWhenNewIsEmpty() {
-        FakePluginSettingsFactory factory = new FakePluginSettingsFactory();
+        final var factory = new FakePluginSettingsFactory();
         factory.settings(MarkdownConfigStore.LEGACY_NAMESPACE).put(MarkdownConfigStore.CONFIG_KEY, LEGACY_JSON);
 
         assertEquals(LEGACY_JSON, MarkdownConfigStore.readConfigJson(factory));
@@ -37,13 +37,13 @@ class MarkdownConfigStoreTest {
 
     @Test
     void blankOrNullStringsAreTreatedAsAbsent() {
-        for (String absent : new String[] {"", "   ", "null", "NULL"}) {
-            FakePluginSettingsFactory factory = new FakePluginSettingsFactory();
+        for (final var absent : new String[] {"", "   ", "null", "NULL"}) {
+            final var factory = new FakePluginSettingsFactory();
             factory.settings(MarkdownConfigStore.NAMESPACE).put(MarkdownConfigStore.CONFIG_KEY, absent);
             factory.settings(MarkdownConfigStore.LEGACY_NAMESPACE).put(MarkdownConfigStore.CONFIG_KEY, LEGACY_JSON);
             assertEquals(LEGACY_JSON, MarkdownConfigStore.readConfigJson(factory), "new value: '" + absent + "'");
 
-            FakePluginSettingsFactory legacyOnly = new FakePluginSettingsFactory();
+            final var legacyOnly = new FakePluginSettingsFactory();
             legacyOnly.settings(MarkdownConfigStore.LEGACY_NAMESPACE).put(MarkdownConfigStore.CONFIG_KEY, absent);
             assertNull(MarkdownConfigStore.readConfigJson(legacyOnly), "legacy value: '" + absent + "'");
             assertNull(legacyOnly.settings(MarkdownConfigStore.NAMESPACE).get(MarkdownConfigStore.CONFIG_KEY));
@@ -52,7 +52,7 @@ class MarkdownConfigStoreTest {
 
     @Test
     void bothAbsentReturnsNull() {
-        FakePluginSettingsFactory factory = new FakePluginSettingsFactory();
+        final var factory = new FakePluginSettingsFactory();
 
         assertNull(MarkdownConfigStore.readConfigJson(factory));
         assertNull(factory.settings(MarkdownConfigStore.NAMESPACE).get(MarkdownConfigStore.CONFIG_KEY));
@@ -60,7 +60,7 @@ class MarkdownConfigStoreTest {
 
     @Test
     void writeStoresIntoNewNamespace() {
-        FakePluginSettingsFactory factory = new FakePluginSettingsFactory();
+        final var factory = new FakePluginSettingsFactory();
 
         MarkdownConfigStore.writeConfigJson(factory, NEW_JSON);
 

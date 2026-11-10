@@ -24,16 +24,16 @@ public final class MarkdownConfigStore {
      */
     public static String readConfigJson(PluginSettingsFactory pluginSettingsFactory) {
         // 1) Try the current namespace first
-        PluginSettings ps = pluginSettingsFactory.createSettingsForNamespace(NAMESPACE);
-        Object v = ps.get(CONFIG_KEY);
+        final PluginSettings ps = pluginSettingsFactory.createSettingsForNamespace(NAMESPACE);
+        final Object v = ps.get(CONFIG_KEY);
         if (isUsable(v)) {
             return (String) v;
         }
 
         // 2) Fallback to the legacy (former Bandana) namespace and migrate if found
-        Object legacy = pluginSettingsFactory.createSettingsForNamespace(LEGACY_NAMESPACE).get(CONFIG_KEY);
+        final Object legacy = pluginSettingsFactory.createSettingsForNamespace(LEGACY_NAMESPACE).get(CONFIG_KEY);
         if (isUsable(legacy)) {
-            String legacyJson = ((String) legacy).trim();
+            final String legacyJson = ((String) legacy).trim();
             ps.put(CONFIG_KEY, legacyJson);
             return legacyJson;
         }
@@ -46,6 +46,6 @@ public final class MarkdownConfigStore {
     }
 
     private static boolean isUsable(Object v) {
-        return v instanceof String && !((String) v).trim().isEmpty() && !"null".equalsIgnoreCase(((String) v).trim());
+        return v instanceof String s && !s.trim().isEmpty() && !"null".equalsIgnoreCase(s.trim());
     }
 }

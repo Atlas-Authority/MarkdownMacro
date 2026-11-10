@@ -51,7 +51,7 @@ public class MarkdownConfigResource {
     // ---- helpers ----
 
     private void ensureAdmin() {
-        String user = userManager.getRemoteUsername();
+        final String user = userManager.getRemoteUsername();
         if (user == null) {
             throw new WebApplicationException(Status.UNAUTHORIZED); // 401
         }
@@ -79,8 +79,8 @@ public class MarkdownConfigResource {
 
         try {
             // Validate it’s JSON and normalize formatting
-            Object tree = mapper.readTree(body);
-            String normalized = mapper.writeValueAsString(tree);
+            final Object tree = mapper.readTree(body);
+            final String normalized = mapper.writeValueAsString(tree);
 
             MarkdownConfigStore.writeConfigJson(pluginSettingsFactory, normalized);
 

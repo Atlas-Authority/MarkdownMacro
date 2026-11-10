@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MarkdownConfigModel {
-    private List<String> whitelist = new ArrayList<String>();
+    private List<String> whitelist = new ArrayList<>();
     private boolean enabled = false;
     private boolean isAzureDevOpsEnabled = false;
 
@@ -37,11 +37,11 @@ public class MarkdownConfigModel {
     @Override
     public boolean equals(Object o) {
     	if (o == this) return true;
-    	if (!(o instanceof MarkdownConfigModel)) return false;
+    	if (!(o instanceof MarkdownConfigModel that)) return false;
     	
-    	if (((MarkdownConfigModel) o).getEnabled() != this.enabled) return false;
-    	if (!((MarkdownConfigModel) o).getWhitelist().equals(this.whitelist)) return false;
-        if (((MarkdownConfigModel) o).getIsAzureDevOpsEnabled() != this.isAzureDevOpsEnabled) return false;
+    	if (that.getEnabled() != this.enabled) return false;
+    	if (!that.getWhitelist().equals(this.whitelist)) return false;
+        if (that.getIsAzureDevOpsEnabled() != this.isAzureDevOpsEnabled) return false;
     	
     	return true;
     }

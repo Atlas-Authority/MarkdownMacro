@@ -21,7 +21,7 @@ public class ResizableImageNodeRenderer implements NodeRenderer
 
     @Override
     public Set<NodeRenderingHandler<?>> getNodeRenderingHandlers() {
-        Set<NodeRenderingHandler<?>> set = new HashSet<>();
+        final var set = new HashSet<NodeRenderingHandler<?>>();
         // @formatter:off
         set.add(new NodeRenderingHandler<>(ResizableImage.class, ResizableImageNodeRenderer.this::render));
         // @formatter:on
@@ -32,7 +32,7 @@ public class ResizableImageNodeRenderer implements NodeRenderer
         if (context.isDoNotRenderLinks()) {
             context.renderChildren(node);
         } else {
-            ResolvedLink link = context.resolveLink(LinkType.IMAGE, node.getSource(), true);
+            final ResolvedLink link = context.resolveLink(LinkType.IMAGE, node.getSource(), true);
             html.srcPos(node.getChars())
                 .attr("src", link.getUrl());
             if (node.getText().isNotEmpty()){

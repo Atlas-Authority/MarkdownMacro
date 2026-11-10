@@ -6,10 +6,10 @@ import com.vladsch.flexmark.util.sequence.BasedSequence;
 import org.jetbrains.annotations.NotNull;
 
 public class ResizableImage extends Node implements DoNotDecorate {
-    protected BasedSequence source = BasedSequence.NULL;
-    protected BasedSequence text = BasedSequence.NULL;
-    protected BasedSequence width = BasedSequence.NULL;
-    protected BasedSequence height = BasedSequence.NULL;
+    protected final BasedSequence source;
+    protected final BasedSequence text;
+    protected final BasedSequence width;
+    protected final BasedSequence height;
 
     @NotNull
     @Override

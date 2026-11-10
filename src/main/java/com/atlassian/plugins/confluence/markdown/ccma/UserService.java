@@ -24,7 +24,7 @@ class UserService {
     private final SpacePermissionService spacePermissionService;
     private final PageRestrictionService pageRestrictionService;
 
-    private final LinkedHashMap<String, Map<String, String>> userMapCache = new LinkedHashMap<String, Map<String, String>>() {
+    private final LinkedHashMap<String, Map<String, String>> userMapCache = new LinkedHashMap<>() {
             @Override
             protected boolean removeEldestEntry(Map.Entry<String, Map<String, String>> eldest) {
                 return this.size() > 2;//we only cache users for up to 2 transfers
@@ -54,8 +54,8 @@ class UserService {
         final Map<Long, PermData> spacePermissions = spacePermissionService.getPermissions(pageDataList);
         final Map<String, PermData> pageRestrictions = pageRestrictionService.getPermissions(pageDataList);
 
-        final Helper helper = new Helper();
-        for (PageData pageData : pageDataList) {
+        final var helper = new Helper();
+        for (final PageData pageData : pageDataList) {
             final String cloudUserKey = helper.pickUserWhoHasEditPerm(pageData, spacePermissions, pageRestrictions, userMap);
             pageData.setUserWithEditCloudId(cloudUserKey);
         }
@@ -67,12 +67,12 @@ class UserService {
     private Map<String, String> getUserMap(AppCloudForgeMigrationGateway gateway) {
         return userMapCache.computeIfAbsent(gateway.getTransferId(), (String sid) -> {
             final PaginatedMapping paginatedMapping = gateway.getPaginatedMapping("identity:user", BATCH_SIZE);
-            final Map<String, String> results = new HashMap<>();
+            final var results = new HashMap<String, String>();
             while (paginatedMapping.next()) {
                 final Map<String, String> mappings = paginatedMapping.getMapping();
-                for (Map.Entry<String, String> entry : mappings.entrySet()) {
-                    String serverUserKey = entry.getKey();
-                    String cloudUserKey = entry.getValue();
+                for (final var entry : mappings.entrySet()) {
+                    final String serverUserKey = entry.getKey();
+                    final String cloudUserKey = entry.getValue();
                     if (serverUserKey.startsWith(USER_MAPPING_PREFIX)) {
                         results.put(serverUserKey, cloudUserKey);
                     }
@@ -123,15 +123,15 @@ class UserService {
 
                 userKeyOpt = pickCommonUser(pageUsers, spaceUsers);
 
-                if (!userKeyOpt.isPresent()) {
+                if (userKeyOpt.isEmpty()) {
                     userKeyOpt = pickUserIfInGroup(pageUsers, spaceGroups);
                 }
 
-                if (!userKeyOpt.isPresent()) {
+                if (userKeyOpt.isEmpty()) {
                     userKeyOpt = pickUserIfInGroup(spaceUsers, pageGroups);
                 }
 
-                if (!userKeyOpt.isPresent()) {
+                if (userKeyOpt.isEmpty()) {
                     userKeyOpt = pickUserInCommonGroup(pageGroups, spaceGroups);
                 }
             }

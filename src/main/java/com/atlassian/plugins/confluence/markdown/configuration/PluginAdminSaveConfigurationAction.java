@@ -35,11 +35,11 @@ public class PluginAdminSaveConfigurationAction extends ConfluenceActionSupport 
     @Override
     public String execute() throws Exception {
         // Load previous config (from PluginSettings first, legacy namespace as fallback) to set isChanged flag
-        String oldJson = MarkdownConfigStore.readConfigJson(pluginSettingsFactory);
-        MacroConfigModel oldModel = parseOrDefault(oldJson);
+        final String oldJson = MarkdownConfigStore.readConfigJson(pluginSettingsFactory);
+        final MacroConfigModel oldModel = parseOrDefault(oldJson);
 
         if (model != null) {
-            boolean changed = (oldModel.getConfig() == null && model.getConfig() != null)
+            final boolean changed = (oldModel.getConfig() == null && model.getConfig() != null)
                     || (oldModel.getConfig() != null && !oldModel.getConfig().equals(model.getConfig()));
             model.setIsChanged(changed);
         }

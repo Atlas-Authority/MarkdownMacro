@@ -29,22 +29,22 @@ public class ResizableImageInlineParserExtension implements InlineParserExtensio
 
     @Override
     public boolean parse(@NotNull LightInlineParser inlineParser) {
-        int index = inlineParser.getIndex();
+        final int index = inlineParser.getIndex();
         if (index + 1 >= inlineParser.getInput().length()) {
             return false;
         }
-        char c = inlineParser.getInput().charAt(index + 1);
+        final char c = inlineParser.getInput().charAt(index + 1);
         if (c == '[') {
-            BasedSequence[] matches = inlineParser.matchWithGroups(IMAGE_PATTERN);
+            final BasedSequence[] matches = inlineParser.matchWithGroups(IMAGE_PATTERN);
             if (matches != null) {
                 inlineParser.flushTextNode();
 
-                BasedSequence text = matches[1];
-                BasedSequence source = matches[2];
-                BasedSequence width = matches[3];
-                BasedSequence height = matches[4];
+                final BasedSequence text = matches[1];
+                final BasedSequence source = matches[2];
+                final BasedSequence width = matches[3];
+                final BasedSequence height = matches[4];
 
-                ResizableImage image = new ResizableImage(text, source, width, height);
+                final var image = new ResizableImage(text, source, width, height);
                 inlineParser.getBlock().appendChild(image);
                 return true;
             }

@@ -35,7 +35,7 @@ public class PluginAdminGetConfigurationAction extends ConfluenceActionSupport {
 
     @Override
     public String doDefault() throws Exception {
-        String json = MarkdownConfigStore.readConfigJson(pluginSettingsFactory); // PluginSettings first; migrate legacy if needed
+        final String json = MarkdownConfigStore.readConfigJson(pluginSettingsFactory); // PluginSettings first; migrate legacy if needed
         model = parseOrDefault(json);
         return INPUT;
     }

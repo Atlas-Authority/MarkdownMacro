@@ -36,7 +36,7 @@ class SpacePermissionService extends PermissionService<Space, Long> {
                 .collect(Collectors.toSet())
                 .stream()
                 .map(spaceManager::getSpace)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override

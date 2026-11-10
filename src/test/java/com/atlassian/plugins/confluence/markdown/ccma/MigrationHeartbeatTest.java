@@ -16,12 +16,11 @@ class MigrationHeartbeatTest {
 
     @Test
     void beatsPeriodicallyUntilClosed() throws Exception {
-        final AtomicInteger beats = new AtomicInteger();
-        final MigrationHeartbeat heartbeat =
-                new MigrationHeartbeat(beats::incrementAndGet, Duration.ofMillis(20), Duration.ofSeconds(10)).start();
-
-        Thread.sleep(200);
-        heartbeat.close();
+        final var beats = new AtomicInteger();
+        try (MigrationHeartbeat ignored =
+                     new MigrationHeartbeat(beats::incrementAndGet, Duration.ofMillis(20), Duration.ofSeconds(10)).start()) {
+            Thread.sleep(200);
+        }
         final int beatsAtClose = beats.get();
         Thread.sleep(100);
 
@@ -31,7 +30,7 @@ class MigrationHeartbeatTest {
 
     @Test
     void stopsAfterTimeout() throws Exception {
-        final AtomicInteger beats = new AtomicInteger();
+        final var beats = new AtomicInteger();
         try (MigrationHeartbeat ignored =
                      new MigrationHeartbeat(beats::incrementAndGet, Duration.ofMillis(20), Duration.ofMillis(100)).start()) {
             Thread.sleep(250);
@@ -45,7 +44,7 @@ class MigrationHeartbeatTest {
 
     @Test
     void keepsBeatingAfterFailedBeat() throws Exception {
-        final AtomicInteger beats = new AtomicInteger();
+        final var beats = new AtomicInteger();
         try (MigrationHeartbeat ignored = new MigrationHeartbeat(() -> {
             if (beats.incrementAndGet() == 1) {
                 throw new IllegalStateException("boom");
@@ -59,7 +58,7 @@ class MigrationHeartbeatTest {
 
     @Test
     void stopsWhenTransferSettled() throws Exception {
-        final AtomicInteger beats = new AtomicInteger();
+        final var beats = new AtomicInteger();
         try (MigrationHeartbeat ignored = new MigrationHeartbeat(() -> {
             beats.incrementAndGet();
             throw new FailsafeException(new HttpServiceException());
