@@ -8,3 +8,6 @@
 target
 notes
 .sdkmanrc
+
+.claude
+.migration-state

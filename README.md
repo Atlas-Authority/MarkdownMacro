@@ -24,5 +24,10 @@ Create a new release based on the correct release branch and correct tag name.
 
 - release/1.6.x will target Confluence < 9. Eg create a release 1.6.30 with tag 1.6.30 on release/1.6.x
 - release/2.x will target Confluence 9, and should be tagged with 2.x.y. Eg create a release 2.0.0 with tag 2.0.0 on release/2.x
-- main will target Confluence 10, and should be tagged with 3.x.y. Eg create a release 3.0.0 with tag 3.0.0 on main
+- release/3.x will target Confluence 10, and should be tagged with 3.x.y. Eg create a release 3.0.4 with tag 3.0.4 on release/3.x
+- main will target Confluence 11 (Platform 9, Java 25), and should be tagged with 4.x.y. Eg create a release 4.0.0 with tag 4.0.0 on main
+
+# Building
+
+The main branch (4.x) requires JDK 25 or newer; the build fails fast on older JDKs. Use JDK 21 for release/3.x.
 

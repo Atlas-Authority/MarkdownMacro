@@ -12,7 +12,7 @@
     
     <groupId>com.atlassian.plugins.confluence.markdown</groupId>
     <artifactId>confluence-markdown-macro</artifactId>
-    <version>3.0.4</version>
+    <version>4.0.0</version>
     
     <organization>
         <name>Atlas Authority</name>
@@ -297,6 +297,22 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-enforcer-plugin</artifactId>
                 <version>3.4.1</version>
+                <executions>
+                    <execution>
+                        <id>enforce-java-25</id>
+                        <goals>
+                            <goal>enforce</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <requireJavaVersion>
+                                    <version>[25,)</version>
+                                    <message>Platform 9 (Confluence 11) requires building with JDK 25 or newer.</message>
+                                </requireJavaVersion>
+                            </rules>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
         <resources>
@@ -307,13 +323,13 @@
         </resources>
     </build>
     <properties>
-        <java.source.version>21</java.source.version>
-        <java.target.version>21</java.target.version>
+        <java.source.version>25</java.source.version>
+        <java.target.version>25</java.target.version>
         <atlassian.plugin.key>com.atlassian.plugins.confluence.markdown.confluence-markdown-macro</atlassian.plugin.key>
         <platform.version>7.0.5</platform.version>
         <confluence.version>10.0.2</confluence.version>
         <confluence.data.version>10.0.2</confluence.data.version>
-        <amps.version>9.5.4</amps.version>
+        <amps.version>9.12.6</amps.version>
         <plugin.testrunner.version>2.0.6</plugin.testrunner.version>
         <atlassian.spring.scanner.version>5.0.2</atlassian.spring.scanner.version>
         <flexmark.version>0.64.8</flexmark.version>
