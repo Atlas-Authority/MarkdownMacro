@@ -131,7 +131,7 @@
     <rest-migration key="rest-migration-key">
         <rest-v2/>
     </rest-migration>
-    <rest key="markdown-from-url-rest-endpoint" path="/markdown-from-url" version="1.0">
+    <rest key="markdown-from-url-rest-endpoint" path="/markdown-from-url" version="1.0" use-jackson="3">
         <description>Markdown From Url REST Endpoint</description>
     </rest>
 

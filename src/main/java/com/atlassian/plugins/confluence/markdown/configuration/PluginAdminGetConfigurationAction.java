@@ -1,83 +1,51 @@
 package com.atlassian.plugins.confluence.markdown.configuration;
 
-import com.atlassian.bandana.BandanaManager;
 import com.atlassian.confluence.core.ConfluenceActionSupport;
-import com.atlassian.confluence.setup.bandana.ConfluenceBandanaContext;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
-import com.atlassian.plugin.spring.scanner.annotation.imports.ConfluenceImport;
-import com.atlassian.sal.api.pluginsettings.PluginSettings;
 import com.atlassian.sal.api.pluginsettings.PluginSettingsFactory;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.json.JsonFactory;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class PluginAdminGetConfigurationAction extends ConfluenceActionSupport {
     // Keys/namespaces
-    public static final String PLUGIN_CONFIG_KEY = "markdown-plugin-config-00";
-    private static final String PS_NAMESPACE = "com.atlassian.plugins.confluence.markdown";
+    public static final String PLUGIN_CONFIG_KEY = MarkdownConfigStore.CONFIG_KEY;
 
-    // New store (Conf 10+)
+    // New store (Conf 10+); legacy namespace is read + migrated by MarkdownConfigStore
     private final PluginSettingsFactory pluginSettingsFactory;
 
-    // Legacy store (read + migrate)
-    private final BandanaManager bandanaManager;
-    private final ConfluenceBandanaContext context = new ConfluenceBandanaContext("markdown-plugin");
-
-    private final ObjectMapper objectMapper =
-            new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    // Jackson 3: immutable mapper; keep Jackson 2 defaults so persisted config JSON reads/writes as before
+    private final ObjectMapper objectMapper = JsonMapper.builder(JsonFactory.builderWithJackson2Defaults().build())
+            .configureForJackson2()
+            .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+            .build();
 
     private MacroConfigModel model;
 
     @Inject
     public PluginAdminGetConfigurationAction(
-            @ComponentImport PluginSettingsFactory pluginSettingsFactory,
-            @ConfluenceImport BandanaManager bandanaManager
+            @ComponentImport PluginSettingsFactory pluginSettingsFactory
     ) {
         this.pluginSettingsFactory = pluginSettingsFactory;
-        this.bandanaManager = bandanaManager;
     }
 
     @Override
     public String doDefault() throws Exception {
-        String json = getConfigWithMigration(); // PluginSettings first; migrate from Bandana if needed
+        String json = MarkdownConfigStore.readConfigJson(pluginSettingsFactory); // PluginSettings first; migrate legacy if needed
         model = parseOrDefault(json);
         return INPUT;
     }
 
     /** Velocity calls this to render initial state */
-    public String getData() throws JsonProcessingException {
+    public String getData() throws JacksonException {
         return objectMapper.writeValueAsString(model);
     }
 
     // ----------------- helpers -----------------
-
-    /**
-     * Reads config from PluginSettings. If not present, reads from Bandana and migrates it
-     * to PluginSettings (so future reads are from the new store).
-     */
-    private String getConfigWithMigration() {
-        // 1) Try PluginSettings first
-        PluginSettings ps = pluginSettingsFactory.createSettingsForKey(PS_NAMESPACE);
-        Object v = ps.get(PLUGIN_CONFIG_KEY);
-        if (v instanceof String && !((String) v).trim().isEmpty() && !"null".equalsIgnoreCase((String) v)) {
-            return (String) v;
-        }
-
-        // 2) Fallback to Bandana (legacy) and migrate if found
-        Object legacy = bandanaManager.getValue(context, PLUGIN_CONFIG_KEY);
-        if (legacy instanceof String) {
-            String legacyJson = ((String) legacy).trim();
-            if (!legacyJson.isEmpty() && !"null".equalsIgnoreCase(legacyJson)) {
-                // migrate to new store
-                ps.put(PLUGIN_CONFIG_KEY, legacyJson);
-                return legacyJson;
-            }
-        }
-
-        return null;
-    }
 
     private MacroConfigModel parseOrDefault(String json) {
         try {

@@ -11,9 +11,11 @@ import com.atlassian.migration.app.PaginatedMapping;
 import com.atlassian.migration.app.gateway.AppCloudForgeMigrationGateway;
 import com.atlassian.migration.app.gateway.MigrationDetailsV1;
 import com.atlassian.user.Group;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.core.json.JsonFactory;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 import dev.failsafe.Failsafe;
 import dev.failsafe.RetryPolicy;
 import org.apache.commons.collections4.ListUtils;
@@ -265,7 +267,10 @@ class Migrator {
      * Loan pattern to build and upload payload.
      */
     private void buildPayloadAndUpload(String label, Function<ObjectMapper, ObjectNode> payloadBuilder) throws IOException {
-        final ObjectMapper objectMapper = new ObjectMapper();
+        // Jackson 3: keep Jackson 2 defaults so the payload bytes match the previous output
+        final ObjectMapper objectMapper = JsonMapper.builder(JsonFactory.builderWithJackson2Defaults().build())
+                .configureForJackson2()
+                .build();
         final ObjectNode payload = payloadBuilder.apply(objectMapper);
         upload(label, objectMapper.writeValueAsBytes(payload));
     }

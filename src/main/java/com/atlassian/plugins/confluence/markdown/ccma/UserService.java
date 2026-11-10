@@ -9,8 +9,8 @@ import com.atlassian.sal.api.user.UserKey;
 import com.atlassian.user.Group;
 import org.apache.commons.collections4.SetUtils;
 
-import javax.inject.Inject;
-import javax.inject.Named;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import java.util.*;
 import java.util.stream.StreamSupport;
 

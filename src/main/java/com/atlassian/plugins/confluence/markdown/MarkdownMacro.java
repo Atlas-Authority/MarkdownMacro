@@ -1,17 +1,17 @@
 package com.atlassian.plugins.confluence.markdown;
 
-import com.atlassian.bandana.BandanaManager;
 import com.atlassian.confluence.content.render.xhtml.ConversionContext;
 import com.atlassian.confluence.content.render.xhtml.DefaultConversionContext;
 import com.atlassian.confluence.macro.Macro;
 import com.atlassian.confluence.macro.MacroExecutionException;
-import com.atlassian.confluence.setup.bandana.ConfluenceBandanaContext;
+import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ConfluenceImport;
 import com.atlassian.plugins.confluence.markdown.ext.DevOpsResizableImage.ResizableImageExtension;
 import com.atlassian.renderer.RenderContext;
 import com.atlassian.renderer.v2.RenderMode;
 import com.atlassian.renderer.v2.macro.BaseMacro;
 import com.atlassian.renderer.v2.macro.MacroException;
+import com.atlassian.sal.api.pluginsettings.PluginSettingsFactory;
 import com.atlassian.webresource.api.assembler.PageBuilderService;
 import com.vladsch.flexmark.ext.tables.TablesExtension;
 import com.vladsch.flexmark.ext.gfm.strikethrough.StrikethroughSubscriptExtension;
@@ -42,19 +42,18 @@ import org.jsoup.select.*;
 import org.owasp.html.HtmlPolicyBuilder;
 import org.owasp.html.PolicyFactory;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 
 public class MarkdownMacro extends BaseMacro implements Macro {
 
     private PageBuilderService pageBuilderService;
-    private BandanaManager bandanaManager;
-    private ConfluenceBandanaContext context = new ConfluenceBandanaContext("markdown-plugin");
+    private PluginSettingsFactory pluginSettingsFactory;
 
     @Inject
-    public MarkdownMacro(@ConfluenceImport PageBuilderService pageBuilderService, @ConfluenceImport BandanaManager bandanaManager) {
+    public MarkdownMacro(@ConfluenceImport PageBuilderService pageBuilderService, @ComponentImport PluginSettingsFactory pluginSettingsFactory) {
         this.pageBuilderService = pageBuilderService;
-        this.bandanaManager = bandanaManager;
+        this.pluginSettingsFactory = pluginSettingsFactory;
     }
 
     @Override
@@ -106,7 +105,7 @@ public class MarkdownMacro extends BaseMacro implements Macro {
             options.set(HtmlRenderer.GENERATE_HEADER_ID, true);
         }
 
-        Boolean isAzureDevOpsEnabled = MarkdownHelper.GetMarkdownConfig(bandanaManager, context)
+        Boolean isAzureDevOpsEnabled = MarkdownHelper.GetMarkdownConfig(pluginSettingsFactory)
                                                      .getIsAzureDevOpsEnabled();
         if (isAzureDevOpsEnabled){
             extensions.add(ResizableImageExtension.create());

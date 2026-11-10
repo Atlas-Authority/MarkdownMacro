@@ -1,22 +1,27 @@
 package com.atlassian.plugins.confluence.markdown;
 
-import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
-import com.atlassian.bandana.BandanaManager;
-import com.atlassian.confluence.setup.bandana.ConfluenceBandanaContext;
 import com.atlassian.plugins.confluence.markdown.configuration.MacroConfigModel;
+import com.atlassian.plugins.confluence.markdown.configuration.MarkdownConfigStore;
 import com.atlassian.plugins.confluence.markdown.configuration.MarkdownConfigModel;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import static com.atlassian.plugins.confluence.markdown.configuration.PluginAdminGetConfigurationAction.PLUGIN_CONFIG_KEY;
+import com.atlassian.sal.api.pluginsettings.PluginSettingsFactory;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.json.JsonFactory;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
 
 public class MarkdownHelper 
 {
-    private static ObjectMapper objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    // Jackson 3: immutable mapper; keep Jackson 2 defaults so persisted config JSON reads/writes as before
+    private static ObjectMapper objectMapper = JsonMapper.builder(JsonFactory.builderWithJackson2Defaults().build())
+            .configureForJackson2()
+            .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+            .build();
 
     public static Path getPathFromRawMarkdownUrl(URL url) {
         String strUrl = url.toString();
@@ -47,14 +52,13 @@ public class MarkdownHelper
         return mainPath.resolve(relativePath).normalize();
     }
 
-    public static MarkdownConfigModel GetMarkdownConfig(BandanaManager bandanaManager, 
-                                                                ConfluenceBandanaContext context){
+    public static MarkdownConfigModel GetMarkdownConfig(PluginSettingsFactory pluginSettingsFactory){
 		MacroConfigModel model = new MacroConfigModel();
-        String config = (String) bandanaManager.getValue(context, PLUGIN_CONFIG_KEY);
+        String config = MarkdownConfigStore.readConfigJson(pluginSettingsFactory);
         if (config != null) {
             try {
                 model = objectMapper.readValue(config, MacroConfigModel.class);
-            } catch (IOException e) {
+            } catch (JacksonException e) {
                 throw new RuntimeException(e);
             }
 		}

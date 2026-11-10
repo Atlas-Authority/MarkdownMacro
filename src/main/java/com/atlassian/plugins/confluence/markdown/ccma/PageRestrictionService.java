@@ -16,8 +16,8 @@ import com.atlassian.confluence.api.service.permissions.ContentRestrictionServic
 import com.atlassian.plugin.spring.scanner.annotation.imports.ConfluenceImport;
 import com.atlassian.sal.api.user.UserKey;
 
-import javax.inject.Inject;
-import javax.inject.Named;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import java.util.*;
 import java.util.stream.Collectors;
 

@@ -1,7 +1,5 @@
 package com.atlassian.plugins.confluence.markdown;
 
-import static com.atlassian.plugins.confluence.markdown.configuration.PluginAdminGetConfigurationAction.PLUGIN_CONFIG_KEY;
-
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -17,23 +15,27 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import com.atlassian.bandana.BandanaManager;
 import com.atlassian.confluence.content.render.xhtml.ConversionContext;
 import com.atlassian.confluence.content.render.xhtml.DefaultConversionContext;
 import com.atlassian.confluence.macro.Macro;
 import com.atlassian.confluence.macro.MacroExecutionException;
-import com.atlassian.confluence.setup.bandana.ConfluenceBandanaContext;
+import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ConfluenceImport;
 import com.atlassian.plugins.confluence.markdown.configuration.MacroConfigModel;
+import com.atlassian.plugins.confluence.markdown.configuration.MarkdownConfigStore;
 import com.atlassian.plugins.confluence.markdown.ext.DevOpsResizableImage.ResizableImageExtension;
 import com.atlassian.plugins.confluence.markdown.utils.IPAddressUtil;
 import com.atlassian.renderer.RenderContext;
 import com.atlassian.renderer.v2.RenderMode;
 import com.atlassian.renderer.v2.macro.BaseMacro;
 import com.atlassian.renderer.v2.macro.MacroException;
+import com.atlassian.sal.api.pluginsettings.PluginSettingsFactory;
 import com.atlassian.webresource.api.assembler.PageBuilderService;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.json.JsonFactory;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 import com.vladsch.flexmark.ext.anchorlink.AnchorLinkExtension;
 import com.vladsch.flexmark.ext.autolink.AutolinkExtension;
 import com.vladsch.flexmark.ext.definition.DefinitionExtension;
@@ -60,13 +62,16 @@ import org.owasp.html.HtmlPolicyBuilder;
 import org.owasp.html.PolicyFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 
-import javax.inject.Inject;
+import jakarta.inject.Inject;
 
 public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 
-    private BandanaManager bandanaManager;
-    private ConfluenceBandanaContext context = new ConfluenceBandanaContext("markdown-plugin");
-    private ObjectMapper objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    private PluginSettingsFactory pluginSettingsFactory;
+    // Jackson 3: immutable mapper; keep Jackson 2 defaults so persisted config JSON reads as before
+    private ObjectMapper objectMapper = JsonMapper.builder(JsonFactory.builderWithJackson2Defaults().build())
+            .configureForJackson2()
+            .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+            .build();
     private List<String[]> whitelistDomains;
     private List<InetAddress> whitelistIPs;
 	private boolean isAzureDevOpsEnabled;
@@ -100,18 +105,18 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 	}
 
 	@Inject
-    public MarkdownFromURLMacro(@ConfluenceImport PageBuilderService pageBuilderService, @ConfluenceImport BandanaManager bandanaManager) {
+    public MarkdownFromURLMacro(@ConfluenceImport PageBuilderService pageBuilderService, @ComponentImport PluginSettingsFactory pluginSettingsFactory) {
         this.pageBuilderService = pageBuilderService;
-        this.bandanaManager = bandanaManager;
+        this.pluginSettingsFactory = pluginSettingsFactory;
     }
 
     private void initWhitelistConfiguration() throws UnknownHostException {
         MacroConfigModel model = new MacroConfigModel();
-        String config = (String) this.bandanaManager.getValue(context, PLUGIN_CONFIG_KEY);
+        String config = MarkdownConfigStore.readConfigJson(this.pluginSettingsFactory);
         if (config != null) {
             try {
                 model = objectMapper.readValue(config, MacroConfigModel.class);
-            } catch (IOException e) {
+            } catch (JacksonException e) {
                 throw new RuntimeException(e);
             }
         }
@@ -241,7 +246,7 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 				e.printStackTrace();
 			}
 
-			isAzureDevOpsEnabled = MarkdownHelper.GetMarkdownConfig(bandanaManager, context)
+			isAzureDevOpsEnabled = MarkdownHelper.GetMarkdownConfig(pluginSettingsFactory)
 												 .getIsAzureDevOpsEnabled();
 
 			Boolean linkifyHeaders = Boolean.parseBoolean(parameters.containsKey("LinkifyHeaders") ? parameters.get("LinkifyHeaders") : "true");
