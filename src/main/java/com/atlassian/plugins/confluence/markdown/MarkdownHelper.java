@@ -15,28 +15,32 @@ import tools.jackson.databind.ObjectMapper;
 import tools.jackson.databind.json.JsonMapper;
 
 
-public class MarkdownHelper 
+public class MarkdownHelper
 {
+    /** Web-resource with the macros' post-render JS/CSS (see js/markdown-macro-init.js). */
+    public static final String MACRO_INIT_WEB_RESOURCE =
+            "com.atlassian.plugins.confluence.markdown.confluence-markdown-macro:markdown-macro-init";
+
     // Jackson 3: immutable mapper; keep Jackson 2 defaults so persisted config JSON reads/writes as before
-    private static ObjectMapper objectMapper = JsonMapper.builder(JsonFactory.builderWithJackson2Defaults().build())
+    private static final ObjectMapper objectMapper = JsonMapper.builder(JsonFactory.builderWithJackson2Defaults().build())
             .configureForJackson2()
             .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
             .build();
 
     public static Path getPathFromRawMarkdownUrl(URL url) {
-        String strUrl = url.toString();
-        int start = strUrl.indexOf("path") + 5;
-        int end = strUrl.indexOf(".md", start) + 3;
+        final String strUrl = url.toString();
+        final int start = strUrl.indexOf("path") + 5;
+        final int end = strUrl.indexOf(".md", start) + 3;
 
-        String extractedPath = strUrl.substring(start, end);
+        final String extractedPath = strUrl.substring(start, end);
         return Paths.get(extractedPath.replace("%2F", "/"));
     }
 
     public static Path getPathFromRawMarkdownUrlAsBodyContent(String strUrl) {
-        int start = strUrl.indexOf("path") + 5;
-        int end = strUrl.indexOf(".md", start) + 3;
+        final int start = strUrl.indexOf("path") + 5;
+        final int end = strUrl.indexOf(".md", start) + 3;
 
-        String extractedPath = strUrl.substring(start, end);
+        final String extractedPath = strUrl.substring(start, end);
         return Paths.get(extractedPath.replace("%2F", "/"));
     }
 
@@ -47,14 +51,14 @@ public class MarkdownHelper
         }
 
         // otherwise resolve and normalize
-        Path relativePath = Paths.get(relativePathStr);
+        final var relativePath = Paths.get(relativePathStr);
         mainPath = mainPath.getParent();
         return mainPath.resolve(relativePath).normalize();
     }
 
     public static MarkdownConfigModel GetMarkdownConfig(PluginSettingsFactory pluginSettingsFactory){
-		MacroConfigModel model = new MacroConfigModel();
-        String config = MarkdownConfigStore.readConfigJson(pluginSettingsFactory);
+		var model = new MacroConfigModel();
+        final String config = MarkdownConfigStore.readConfigJson(pluginSettingsFactory);
         if (config != null) {
             try {
                 model = objectMapper.readValue(config, MacroConfigModel.class);

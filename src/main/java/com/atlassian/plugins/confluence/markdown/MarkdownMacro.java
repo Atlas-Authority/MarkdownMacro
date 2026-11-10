@@ -33,7 +33,6 @@ import com.vladsch.flexmark.util.misc.Extension;
 
 import java.util.Map;
 import java.util.ArrayList;
-import java.util.List;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.*;
@@ -47,8 +46,8 @@ import jakarta.inject.Inject;
 
 public class MarkdownMacro extends BaseMacro implements Macro {
 
-    private PageBuilderService pageBuilderService;
-    private PluginSettingsFactory pluginSettingsFactory;
+    private final PageBuilderService pageBuilderService;
+    private final PluginSettingsFactory pluginSettingsFactory;
 
     @Inject
     public MarkdownMacro(@ConfluenceImport PageBuilderService pageBuilderService, @ComponentImport PluginSettingsFactory pluginSettingsFactory) {
@@ -70,11 +69,11 @@ public class MarkdownMacro extends BaseMacro implements Macro {
     public String execute(Map<String, String> parameters, String bodyContent, ConversionContext conversionContext) throws MacroExecutionException {
 
 
-    	pageBuilderService.assembler().resources().requireWebResource("com.atlassian.plugins.confluence.markdown.confluence-markdown-macro:highlightjs");
-       	pageBuilderService.assembler().resources().requireWebResource("com.atlassian.plugins.confluence.markdown.confluence-markdown-macro:mermaidjs");
-       	pageBuilderService.assembler().resources().requireWebResource("com.atlassian.plugins.confluence.markdown.confluence-markdown-macro:markdown-mermaid-render");
+    	// Highlighting and Mermaid rendering run from this web-resource (pulls in highlightjs and
+    	// mermaid as dependencies); inline <script> in macro output is blocked by Confluence's CSP.
+    	pageBuilderService.assembler().resources().requireWebResource(MarkdownHelper.MACRO_INIT_WEB_RESOURCE);
 
-		MutableDataSet options = new MutableDataSet()
+		final MutableDataSet options = new MutableDataSet()
 			.set(HtmlRenderer.GENERATE_HEADER_ID, true)
 			.set(HtmlRenderer.INDENT_SIZE, 2)
 			.set(HtmlRenderer.PERCENT_ENCODE_URLS, true)
@@ -86,8 +85,8 @@ public class MarkdownMacro extends BaseMacro implements Macro {
 			.set(TablesExtension.HEADER_SEPARATOR_COLUMN_MATCH, true)	
 			.set(TablesExtension.CLASS_NAME, "confluenceTable");
         
-        Boolean linkifyHeaders = Boolean.parseBoolean(parameters.containsKey("LinkifyHeaders") ? parameters.get("LinkifyHeaders") : "true");
-		List<Extension> extensions = new ArrayList<>();
+        final Boolean linkifyHeaders = Boolean.parseBoolean(parameters.containsKey("LinkifyHeaders") ? parameters.get("LinkifyHeaders") : "true");
+		final var extensions = new ArrayList<Extension>();
 		extensions.add(TablesExtension.create());
 		extensions.add(StrikethroughSubscriptExtension.create());
 		extensions.add(InsExtension.create());
@@ -105,7 +104,7 @@ public class MarkdownMacro extends BaseMacro implements Macro {
             options.set(HtmlRenderer.GENERATE_HEADER_ID, true);
         }
 
-        Boolean isAzureDevOpsEnabled = MarkdownHelper.GetMarkdownConfig(pluginSettingsFactory)
+        final Boolean isAzureDevOpsEnabled = MarkdownHelper.GetMarkdownConfig(pluginSettingsFactory)
                                                      .getIsAzureDevOpsEnabled();
         if (isAzureDevOpsEnabled){
             extensions.add(ResizableImageExtension.create());
@@ -113,44 +112,29 @@ public class MarkdownMacro extends BaseMacro implements Macro {
 
 		options.set(Parser.EXTENSIONS, extensions);
 
-        String highlightjs = "<script>\n" +
-                "AJS.$('[data-macro-name=\"markdown\"] code').each(function(i, block) {\n" +
-                "    hljs.highlightBlock(block);\n" +
-                "  });\n" +
-                "</script>";
+        final var parser = Parser.builder(options).build();
+        final var renderer = HtmlRenderer.builder(options).build();
 
-        String highlightjscss = "<style>\n" +
-                ".hljs {display: inline;}\n" +
-                "pre > code {display: block !important;}\n" +
-                "</style>";
+        final Node document = parser.parse(bodyContent);
 
-        String rendermermaidjs ="<script>\n" +
-                "if (window.MarkdownMermaidRenderer) { window.MarkdownMermaidRenderer.renderAll('markdown'); }\n" +
-                "</script>";
+        final String htmlBody = renderer.render(document);
 
-        Parser parser = Parser.builder(options).build();
-        HtmlRenderer renderer = HtmlRenderer.builder(options).build();
-
-        Node document = parser.parse(bodyContent);
-
-        String htmlBody = renderer.render(document);
-
-        Document doc = Jsoup.parseBodyFragment(htmlBody);
-        Element body = doc.body();
-        Elements th = body.getElementsByTag("th");
-        Elements td = body.getElementsByTag("td");
-        for (Element thi : th) {
-			String alignment = thi.attributes().get("align");
+        final var doc = Jsoup.parseBodyFragment(htmlBody);
+        final Element body = doc.body();
+        final Elements th = body.getElementsByTag("th");
+        final Elements td = body.getElementsByTag("td");
+        for (final Element thi : th) {
+			final String alignment = thi.attributes().get("align");
 			if (alignment != null && !alignment.isEmpty()) thi.attr("style", "text-align: " + alignment + ";");	
             thi.addClass("confluenceTh");
         }
-        for (Element tdi : td) {
-			String alignment = tdi.attributes().get("align");
+        for (final Element tdi : td) {
+			final String alignment = tdi.attributes().get("align");
 			if (alignment != null && !alignment.isEmpty()) tdi.attr("style", "text-align: " + alignment + ";");
             tdi.addClass("confluenceTd");
         }
         
-        PolicyFactory policy = new HtmlPolicyBuilder()
+        final PolicyFactory policy = new HtmlPolicyBuilder()
         		.allowCommonInlineFormattingElements()
         		.allowCommonBlockElements()
         		.allowStyling()
@@ -164,10 +148,7 @@ public class MarkdownMacro extends BaseMacro implements Macro {
         	    .allowAttributes("type", "class", "checked", "disabled", "readonly").onElements("input")
 		        .allowTextIn("table")
         		.toFactory();
-        String sanitizedBody = policy.sanitize(body.html());
-        String html =  sanitizedBody +  highlightjs + rendermermaidjs + highlightjscss;
-
-        return html;
+        return policy.sanitize(body.html());
 
     }
 
