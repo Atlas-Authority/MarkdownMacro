@@ -81,7 +81,6 @@ public class MigrationListener implements DiscoverableForgeListener {
 
     @Override
     public String getForgeEnvironmentName() {
-//        return ForgeEnvironmentName.PRODUCTION;
-        return "staging";
+        return ForgeEnvironmentName.PRODUCTION;
     }
 }

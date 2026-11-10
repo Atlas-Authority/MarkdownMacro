@@ -177,7 +177,7 @@
         <dependency>
             <groupId>com.atlassian</groupId>
             <artifactId>atlassian-app-cloud-migration-listener</artifactId>
-            <version>1.8.8</version>
+            <version>1.8.9</version>
         </dependency>
         <dependency>
             <groupId>com.google.code.gson</groupId>
@@ -206,7 +206,7 @@
                     <compressJs>false</compressJs>
                     <compressCss>false</compressCss>
                     <compressResources>false</compressResources>
-                    <jvmArgs>-Xms1g -Xmx2g -server</jvmArgs>
+                    <jvmArgs>-Xms2g -Xmx6g -server</jvmArgs>
                     <systemPropertyVariables>
                         <upm.plugin.upload.enabled>true</upm.plugin.upload.enabled>
                         <!-- set to false if you want to test app signing -->
@@ -344,7 +344,7 @@
         <confluence.data.version>11.0.1</confluence.data.version>
         <amps.version>9.12.6</amps.version>
         <plugin.testrunner.version>2.0.6</plugin.testrunner.version>
-        <atlassian.spring.scanner.version>5.0.2</atlassian.spring.scanner.version>
+        <atlassian.spring.scanner.version>7.0.0</atlassian.spring.scanner.version>
         <flexmark.version>0.64.8</flexmark.version>
     </properties>
     <scm>
