@@ -51,8 +51,26 @@ jobs:
       - name: Release
         uses: Atlas-Authority/atlassian-marketplace-release-action/release@main
         with:
-          branch: main
+          branch: release/3.x
           jdkVersion: 21
+          githubUserName: DevOps
+          githubUserEmail: devops@atlasauthority.com
+          githubToken: ${{ secrets.GHA_ADMIN }}
+          marketplaceUser: devops@atlasauthority.com
+          marketplaceToken: ${{ secrets.MARKETPLACE_TOKEN }}
+
+  build_4_x:
+    name: Build tagged version for 4.x
+    runs-on: ubuntu-latest
+    if: startsWith(github.event.release.tag_name, '4.')
+    permissions:
+      contents: write
+    steps:
+      - name: Release
+        uses: Atlas-Authority/atlassian-marketplace-release-action/release@main
+        with:
+          branch: main
+          jdkVersion: 25
           githubUserName: DevOps
           githubUserEmail: devops@atlasauthority.com
           githubToken: ${{ secrets.GHA_ADMIN }}
