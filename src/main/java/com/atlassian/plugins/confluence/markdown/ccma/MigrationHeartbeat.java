@@ -24,7 +24,7 @@ class MigrationHeartbeat implements AutoCloseable {
     private final Duration interval;
     private final Duration timeout;
     private final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor(runnable -> {
-        final Thread thread = new Thread(runnable, "iframes-migration-heartbeat");
+        final var thread = new Thread(runnable, "iframes-migration-heartbeat");
         thread.setDaemon(true);
         return thread;
     });

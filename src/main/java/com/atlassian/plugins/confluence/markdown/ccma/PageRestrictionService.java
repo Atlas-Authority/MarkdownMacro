@@ -16,8 +16,8 @@ import com.atlassian.confluence.api.service.permissions.ContentRestrictionServic
 import com.atlassian.plugin.spring.scanner.annotation.imports.ConfluenceImport;
 import com.atlassian.sal.api.user.UserKey;
 
-import javax.inject.Inject;
-import javax.inject.Named;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -44,7 +44,7 @@ class PageRestrictionService extends PermissionService<Content, String> {
         return pageDataList
                 .stream()
                 .map(PageData::getPageContent)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     @Override
@@ -76,7 +76,7 @@ class PageRestrictionService extends PermissionService<Content, String> {
     }
 
     private List<Subject> getRestrictions(ContentId contentId, SubjectType subjectType, Expansions expansions) {
-        final List<Subject> results = new ArrayList<>();
+        final var results = new ArrayList<Subject>();
 
         Optional<PageResponse<Subject>> pageResponse = Optional.empty();
         do {

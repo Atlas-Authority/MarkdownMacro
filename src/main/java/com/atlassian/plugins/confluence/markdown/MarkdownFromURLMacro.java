@@ -1,39 +1,21 @@
 package com.atlassian.plugins.confluence.markdown;
 
-import static com.atlassian.plugins.confluence.markdown.configuration.PluginAdminGetConfigurationAction.PLUGIN_CONFIG_KEY;
-
-import java.io.BufferedReader;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.InetAddress;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.UnknownHostException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-
-import com.atlassian.bandana.BandanaManager;
 import com.atlassian.confluence.content.render.xhtml.ConversionContext;
 import com.atlassian.confluence.content.render.xhtml.DefaultConversionContext;
 import com.atlassian.confluence.macro.Macro;
 import com.atlassian.confluence.macro.MacroExecutionException;
-import com.atlassian.confluence.setup.bandana.ConfluenceBandanaContext;
+import com.atlassian.plugin.spring.scanner.annotation.imports.ComponentImport;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ConfluenceImport;
 import com.atlassian.plugins.confluence.markdown.configuration.MacroConfigModel;
+import com.atlassian.plugins.confluence.markdown.configuration.MarkdownConfigStore;
 import com.atlassian.plugins.confluence.markdown.ext.DevOpsResizableImage.ResizableImageExtension;
 import com.atlassian.plugins.confluence.markdown.utils.IPAddressUtil;
 import com.atlassian.renderer.RenderContext;
 import com.atlassian.renderer.v2.RenderMode;
 import com.atlassian.renderer.v2.macro.BaseMacro;
 import com.atlassian.renderer.v2.macro.MacroException;
+import com.atlassian.sal.api.pluginsettings.PluginSettingsFactory;
 import com.atlassian.webresource.api.assembler.PageBuilderService;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.vladsch.flexmark.ext.anchorlink.AnchorLinkExtension;
 import com.vladsch.flexmark.ext.autolink.AutolinkExtension;
 import com.vladsch.flexmark.ext.definition.DefinitionExtension;
@@ -51,28 +33,47 @@ import com.vladsch.flexmark.parser.Parser;
 import com.vladsch.flexmark.util.ast.Node;
 import com.vladsch.flexmark.util.data.MutableDataSet;
 import com.vladsch.flexmark.util.misc.Extension;
-
+import jakarta.inject.Inject;
 import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import org.owasp.html.HtmlPolicyBuilder;
 import org.owasp.html.PolicyFactory;
-import org.springframework.beans.factory.annotation.Autowired;
+import tools.jackson.core.JacksonException;
+import tools.jackson.core.json.JsonFactory;
+import tools.jackson.databind.DeserializationFeature;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
 
-import javax.inject.Inject;
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.InetAddress;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.UnknownHostException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 
-    private BandanaManager bandanaManager;
-    private ConfluenceBandanaContext context = new ConfluenceBandanaContext("markdown-plugin");
-    private ObjectMapper objectMapper = new ObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+    private final PluginSettingsFactory pluginSettingsFactory;
+    // Jackson 3: immutable mapper; keep Jackson 2 defaults so persisted config JSON reads as before
+    private final ObjectMapper objectMapper = JsonMapper.builder(JsonFactory.builderWithJackson2Defaults().build())
+            .configureForJackson2()
+            .disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES)
+            .build();
     private List<String[]> whitelistDomains;
     private List<InetAddress> whitelistIPs;
 	private boolean isAzureDevOpsEnabled;
     private boolean enabled;
 
-    private PageBuilderService pageBuilderService;
+    private final PageBuilderService pageBuilderService;
     
     class PrivateRepositoryException extends Exception {
 		public PrivateRepositoryException(String message) {
@@ -100,31 +101,31 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 	}
 
 	@Inject
-    public MarkdownFromURLMacro(@ConfluenceImport PageBuilderService pageBuilderService, @ConfluenceImport BandanaManager bandanaManager) {
+    public MarkdownFromURLMacro(@ConfluenceImport PageBuilderService pageBuilderService, @ComponentImport PluginSettingsFactory pluginSettingsFactory) {
         this.pageBuilderService = pageBuilderService;
-        this.bandanaManager = bandanaManager;
+        this.pluginSettingsFactory = pluginSettingsFactory;
     }
 
     private void initWhitelistConfiguration() throws UnknownHostException {
-        MacroConfigModel model = new MacroConfigModel();
-        String config = (String) this.bandanaManager.getValue(context, PLUGIN_CONFIG_KEY);
+        var model = new MacroConfigModel();
+        final String config = MarkdownConfigStore.readConfigJson(this.pluginSettingsFactory);
         if (config != null) {
             try {
                 model = objectMapper.readValue(config, MacroConfigModel.class);
-            } catch (IOException e) {
+            } catch (JacksonException e) {
                 throw new RuntimeException(e);
             }
         }
         enabled = model.getConfig().getEnabled();
-        whitelistDomains = new ArrayList<String[]>();
-        whitelistIPs = new ArrayList<InetAddress>();
-        for (String domain : model.getConfig().getWhitelist()) {
-        	if (domain.length() == 0) continue;
+        whitelistDomains = new ArrayList<>();
+        whitelistIPs = new ArrayList<>();
+        for (final String domain : model.getConfig().getWhitelist()) {
+        	if (domain.isEmpty()) continue;
         	
         	if (isIPLiteral(domain)) {
         		whitelistIPs.add(InetAddress.getByName(domain));
         	} else {
-	        	String[] domainComponents = domain.split("\\.");
+	        	final String[] domainComponents = domain.split("\\.");
 	        	whitelistDomains.add(domainComponents);
         	}
         }
@@ -137,10 +138,10 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
     private boolean isAllowedToProceed(URL url) throws UnknownHostException {
         if (!enabled) return true;
         
-        String host = url.getHost();
+        final String host = url.getHost();
         
-        String[] hostComponents = host.split("\\.");
-        for (String[] whitelistDomainComponents : whitelistDomains) {
+        final String[] hostComponents = host.split("\\.");
+        for (final String[] whitelistDomainComponents : whitelistDomains) {
             if (hostComponents.length < whitelistDomainComponents.length) continue;
             boolean isMatch = true;
         	for (int i = 0; i < whitelistDomainComponents.length; i++) {
@@ -149,8 +150,8 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
         	if (isMatch) return true;
         }
         
-        InetAddress inetAddr = InetAddress.getByName(host);
-        for (InetAddress whitelistIP : whitelistIPs) {
+        final InetAddress inetAddr = InetAddress.getByName(host);
+        for (final InetAddress whitelistIP : whitelistIPs) {
         	if (inetAddr.equals(whitelistIP)) return true;
         }
         
@@ -158,17 +159,17 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
     }
 
     private URL getFinalURL(URL url) throws IOException, IllegalRedirectException {
-    	HttpURLConnection con = (HttpURLConnection) url.openConnection();
+    	final var con = (HttpURLConnection) url.openConnection();
     	con.setInstanceFollowRedirects(false);
     	con.connect();
     	con.getInputStream();
     	
-    	int responseCode = con.getResponseCode();
+    	final int responseCode = con.getResponseCode();
     	if (responseCode >= 300 && responseCode < 400) {
-    		String redirectUrlString = con.getHeaderField("Location");
+    		final String redirectUrlString = con.getHeaderField("Location");
     		if (redirectUrlString == null) throw new IllegalRedirectException();
 			try {
-				URL redirectUrl = new URL(url, redirectUrlString);
+				final var redirectUrl = new URL(url, redirectUrlString);
 				if (!isAllowedToProceed(redirectUrl)) {
 	        		throw new IllegalRedirectException(false, redirectUrlString);
 	        	}
@@ -197,11 +198,11 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 
 		if (bodyContent != null) {
 
-			pageBuilderService.assembler().resources().requireWebResource("com.atlassian.plugins.confluence.markdown.confluence-markdown-macro:highlightjs");
-      	    pageBuilderService.assembler().resources().requireWebResource("com.atlassian.plugins.confluence.markdown.confluence-markdown-macro:mermaidjs");
-      	    pageBuilderService.assembler().resources().requireWebResource("com.atlassian.plugins.confluence.markdown.confluence-markdown-macro:markdown-mermaid-render");
+			// Highlighting and Mermaid rendering run from this web-resource (pulls in highlightjs and
+			// mermaid as dependencies); inline <script> in macro output is blocked by Confluence's CSP.
+			pageBuilderService.assembler().resources().requireWebResource(MarkdownHelper.MACRO_INIT_WEB_RESOURCE);
 
-			MutableDataSet options = new MutableDataSet()
+			final MutableDataSet options = new MutableDataSet()
 				.set(HtmlRenderer.GENERATE_HEADER_ID, true)
 				.set(HtmlRenderer.INDENT_SIZE, 2)
 				.set(HtmlRenderer.PERCENT_ENCODE_URLS, true)
@@ -219,21 +220,6 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 			String html = "";
 			String toParse = "";
 
-			String highlightjs = "<script>\n" +
-					"AJS.$('[data-macro-name=\"markdown-from-url\"] code').each(function(i, block) {\n" +
-					"    hljs.highlightBlock(block);\n" +
-					"  });\n" +
-					"</script>";
-
-			String highlightjscss = "<style>\n"+
-					".hljs {display: inline;}\n" +
-					"pre > code {display: block !important;}\n" +
-					"</style>";
-                    
-            String rendermermaidjs ="<script>\n" +
-                    "if (window.MarkdownMermaidRenderer) { window.MarkdownMermaidRenderer.renderAll('markdown-from-url'); }\n" +
-                    "</script>";
-
 			URL importFrom = null;
 			try {
 				importFrom = new URL(bodyContent);
@@ -241,15 +227,15 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 				e.printStackTrace();
 			}
 
-			isAzureDevOpsEnabled = MarkdownHelper.GetMarkdownConfig(bandanaManager, context)
+			isAzureDevOpsEnabled = MarkdownHelper.GetMarkdownConfig(pluginSettingsFactory)
 												 .getIsAzureDevOpsEnabled();
 
-			Boolean linkifyHeaders = Boolean.parseBoolean(parameters.containsKey("LinkifyHeaders") ? parameters.get("LinkifyHeaders") : "true");
-			Boolean useRelativePathsAzureDevOps = isAzureDevOpsEnabled && parameters.containsKey("LinkAzureDevOpsRepository")
+			final Boolean linkifyHeaders = Boolean.parseBoolean(parameters.containsKey("LinkifyHeaders") ? parameters.get("LinkifyHeaders") : "true");
+			final Boolean useRelativePathsAzureDevOps = isAzureDevOpsEnabled && parameters.containsKey("LinkAzureDevOpsRepository")
 					? !MarkdownHelper.isNullOrEmpty(parameters.get("LinkAzureDevOpsRepository"))
 					: false;
 
-			List<Extension> extensions = new ArrayList<>();
+			final var extensions = new ArrayList<Extension>();
 			extensions.add(TablesExtension.create());
 			extensions.add(StrikethroughSubscriptExtension.create());
 			extensions.add(InsExtension.create());
@@ -272,7 +258,7 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 
 			if (useRelativePathsAzureDevOps) {
 				pathToRepository = parameters.get("LinkAzureDevOpsRepository");
-				Path repoPath = MarkdownHelper.getPathFromRawMarkdownUrl(importFrom);
+				final Path repoPath = MarkdownHelper.getPathFromRawMarkdownUrl(importFrom);
 
 				MarkdownRelativeDevOpsUrls.relativePathDataKey = repoPath.toString();
 				MarkdownRelativeDevOpsUrls.devOpsUrlDataKey = pathToRepository;
@@ -287,8 +273,8 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 
 			options.set(Parser.EXTENSIONS, extensions);
 
-			Parser parser = Parser.builder(options).build();
-			HtmlRenderer renderer = HtmlRenderer.builder(options).build();
+			final var parser = Parser.builder(options).build();
+			final var renderer = HtmlRenderer.builder(options).build();
 			try {
 				initWhitelistConfiguration();
 
@@ -306,59 +292,58 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 					}
 					importFrom = getFinalURL(importFrom);
 				} else {
-					InetAddress inetAddress = InetAddress.getByName(importFrom.getHost());
+					final var inetAddress = InetAddress.getByName(importFrom.getHost());
 					if(inetAddress.isAnyLocalAddress() || inetAddress.isLoopbackAddress() || inetAddress.isLinkLocalAddress()) {
 						throw new MalformedURLException();
 					}
 				}
 					
-				BufferedReader in = new BufferedReader(
+				try (var in = new BufferedReader(
 					new InputStreamReader(importFrom.openStream(), StandardCharsets.UTF_8)
-				);
-				
-				String inputLine;
-				while ((inputLine = in.readLine()) != null) {
-					toParse = toParse + "\n" + inputLine;
+				)) {
+					String inputLine;
+					while ((inputLine = in.readLine()) != null) {
+						toParse = toParse + "\n" + inputLine;
+					}
 				}
-				in.close();
 				toParse = toParse.trim();
 				if (toParse.startsWith("<html>\n<head>\n  <title>OpenID transaction in progress</title>")) {
 					throw new PrivateRepositoryException("Cannot import from private repository.");
 				} else {
-					Node document = parser.parse(toParse);
-					String htmlBody = renderer.render(document);
+					final Node document = parser.parse(toParse);
+					final String htmlBody = renderer.render(document);
 
-					Document doc = Jsoup.parseBodyFragment(htmlBody);
-					Element body = doc.body();
-					Elements th = body.getElementsByTag("th");
-					Elements td = body.getElementsByTag("td");
-					for (Element thi : th) {
-						String alignment = thi.attributes().get("align");
+					final var doc = Jsoup.parseBodyFragment(htmlBody);
+					final Element body = doc.body();
+					final Elements th = body.getElementsByTag("th");
+					final Elements td = body.getElementsByTag("td");
+					for (final Element thi : th) {
+						final String alignment = thi.attributes().get("align");
 						if (alignment != null && !alignment.isEmpty()) thi.attr("style", "text-align: " + alignment + ";");	
 						thi.addClass("confluenceTh");
 					}
-					for (Element tdi : td) {
-						String alignment = tdi.attributes().get("align");
+					for (final Element tdi : td) {
+						final String alignment = tdi.attributes().get("align");
 						if (alignment != null && !alignment.isEmpty()) tdi.attr("style", "text-align: " + alignment + ";");
 						tdi.addClass("confluenceTd");
 					}
 
-					Elements links = body.getElementsByTag("a");
-					Elements images = body.getElementsByTag("img");
-					for (Element link : links) {
-						String href = link.attributes().get("href");
+					final Elements links = body.getElementsByTag("a");
+					final Elements images = body.getElementsByTag("img");
+					for (final Element link : links) {
+						final String href = link.attributes().get("href");
 						if (href != null && !href.isEmpty() && href.charAt(0) != '#') {
 							link.attr("href", new URL(importFrom, href).toString());
 						}	
 					}
-					for (Element image : images) {
-						String src = image.attributes().get("src");
+					for (final Element image : images) {
+						final String src = image.attributes().get("src");
 						if (src != null && !src.isEmpty() && src.charAt(0) != '#') {
 							image.attr("src", new URL(importFrom, src).toString());
 						}
 					}
 					
-			        PolicyFactory policy = new HtmlPolicyBuilder()
+			        final PolicyFactory policy = new HtmlPolicyBuilder()
 			        		.allowCommonInlineFormattingElements()
 			        		.allowCommonBlockElements()
 			        		.allowStyling()
@@ -376,7 +361,7 @@ public class MarkdownFromURLMacro extends BaseMacro implements Macro {
 					if (useRelativePathsAzureDevOps) {
 						sanitizedBody = sanitizedBody.replace("?path&#61;", "?path=");
 					}
-			        html =  sanitizedBody +  highlightjs + rendermermaidjs + highlightjscss;
+			        html = sanitizedBody;
 
 					return html;
 				}

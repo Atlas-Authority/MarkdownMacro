@@ -11,9 +11,11 @@ import com.atlassian.migration.app.PaginatedMapping;
 import com.atlassian.migration.app.gateway.AppCloudForgeMigrationGateway;
 import com.atlassian.migration.app.gateway.MigrationDetailsV1;
 import com.atlassian.user.Group;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import tools.jackson.core.json.JsonFactory;
+import tools.jackson.databind.ObjectMapper;
+import tools.jackson.databind.json.JsonMapper;
+import tools.jackson.databind.node.ArrayNode;
+import tools.jackson.databind.node.ObjectNode;
 import dev.failsafe.Failsafe;
 import dev.failsafe.RetryPolicy;
 import org.apache.commons.collections4.ListUtils;
@@ -77,7 +79,7 @@ class Migrator {
         try (MigrationHeartbeat ignored = new MigrationHeartbeat(this::uploadHeartbeat, HEARTBEAT_INTERVAL, HEARTBEAT_TIMEOUT).start()) {
             setAdminUser();
             uploadStartingPayload();
-            int totalNonEmptyChunks = uploadChunks();
+            final int totalNonEmptyChunks = uploadChunks();
             uploadEndingPayload(totalNonEmptyChunks);
             gateway.completeExport();
         } catch (Exception e) {
@@ -88,7 +90,7 @@ class Migrator {
     private void uploadStartingPayload() throws IOException {
         log.info("Start uploading starting payload");
         buildPayloadAndUpload(STARTING_PAYLOAD, objectMapper -> {
-            final ObjectNode node = objectMapper.createObjectNode();
+            final var node = objectMapper.createObjectNode();
             node.put("serverAppVersion", serverAppVersion);
             node.put("sourceApp", "markdown-macro");
             return node;
@@ -131,12 +133,12 @@ class Migrator {
     private void uploadDataPayload(String spaceKey, List<PageData> pageDataList, int index) throws IOException {
         log.info("Start uploading data payload #{}...", index);
         buildPayloadAndUpload(DATA_PAYLOAD + "_" + pageDataList.size(), objectMapper -> {
-            final ObjectNode node = objectMapper.createObjectNode();
+            final var node = objectMapper.createObjectNode();
             node.put("spaceKey", spaceKey);
             final ArrayNode pagesNode = node.putArray("pages");
             final ArrayNode cloudPageIdsNode = node.putArray("cloudPageId");
 
-            for (PageData pageData : pageDataList) {
+            for (final PageData pageData : pageDataList) {
                 cloudPageIdsNode.add(pageData.getPageCloudId());
                 final ObjectNode page = pagesNode.addObject();
                 page.put("pageCloudId", pageData.getPageCloudId());
@@ -156,7 +158,7 @@ class Migrator {
     private void uploadEndingPayload(int totalNonEmptyChunks) throws IOException {
         log.info("Start uploading ending payload...");
         buildPayloadAndUpload(ENDING_PAYLOAD + "_" + totalNonEmptyChunks, objectMapper -> {
-            final ObjectNode node = objectMapper.createObjectNode();
+            final var node = objectMapper.createObjectNode();
             node.put("totalNonEmptyChunks", totalNonEmptyChunks);
             return node;
         });
@@ -173,7 +175,7 @@ class Migrator {
     private void uploadErrorPayload(int index, Exception e) throws IOException {
         log.info("Start uploading error payload #{}...", index);
         buildPayloadAndUpload(DATA_ERROR_PAYLOAD, objectMapper -> {
-            final ObjectNode node = objectMapper.createObjectNode();
+            final var node = objectMapper.createObjectNode();
             node.put("error", "Error while preparing migration payload in server app: " + e.getMessage());
             return node;
         });
@@ -194,7 +196,7 @@ class Migrator {
         }
 
         // Get all current spaces on server side
-        final List<Space> serverSpaces = new ArrayList<>();
+        final var serverSpaces = new ArrayList<Space>();
         final var spaceIterable = PageIterable.spaces(spaceService, FETCH_SPACE_SIZE);
         for (final var chunk : spaceIterable) {
             serverSpaces.addAll(chunk.getResults());
@@ -254,7 +256,7 @@ class Migrator {
                 })
                 .filter(Optional::isPresent)
                 .map(Optional::get)
-                .collect(Collectors.toList());
+                .toList();
 
         userService.enrichCloudUser(gateway, pageDataList);
 
@@ -265,7 +267,10 @@ class Migrator {
      * Loan pattern to build and upload payload.
      */
     private void buildPayloadAndUpload(String label, Function<ObjectMapper, ObjectNode> payloadBuilder) throws IOException {
-        final ObjectMapper objectMapper = new ObjectMapper();
+        // Jackson 3: keep Jackson 2 defaults so the payload bytes match the previous output
+        final ObjectMapper objectMapper = JsonMapper.builder(JsonFactory.builderWithJackson2Defaults().build())
+                .configureForJackson2()
+                .build();
         final ObjectNode payload = payloadBuilder.apply(objectMapper);
         upload(label, objectMapper.writeValueAsBytes(payload));
     }
@@ -282,9 +287,9 @@ class Migrator {
                 .build();
 
         Failsafe.with(retryPolicy).run(() -> {
-            final OutputStream outputStream = gateway.createAppData(label);
-            outputStream.write(data);
-            outputStream.close();
+            try (OutputStream outputStream = gateway.createAppData(label)) {
+                outputStream.write(data);
+            }
         });
     }
 

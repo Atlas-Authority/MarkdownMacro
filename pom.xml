@@ -60,6 +60,17 @@
             <version>${atlassian.spring.scanner.version}</version>
             <scope>provided</scope>
         </dependency>
+        <!-- Confluence 11 declares Spring as provided, so it is no longer inherited transitively -->
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-context</artifactId>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-beans</artifactId>
+            <scope>provided</scope>
+        </dependency>
         <dependency>
             <groupId>com.atlassian.confluence</groupId>
             <artifactId>confluence</artifactId>
@@ -84,7 +95,6 @@
         </dependency>
         <dependency>
             <groupId>jakarta.ws.rs</groupId>
-            <version>3.1.0</version>
             <artifactId>jakarta.ws.rs-api</artifactId>
             <scope>provided</scope>
         </dependency>
@@ -133,20 +143,20 @@
 		    <artifactId>owasp-java-html-sanitizer</artifactId>
             <version>20260101.1</version>
 		</dependency>
-         <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
+        <dependency>
+            <groupId>tools.jackson.core</groupId>
             <artifactId>jackson-core</artifactId>
-            <version>${jackson.version}</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
+            <groupId>tools.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
-            <version>${jackson.version}</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-annotations</artifactId>
-            <version>${jackson.version}</version>
+            <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>com.google.code.findbugs</groupId>
@@ -158,10 +168,16 @@
             <artifactId>guava</artifactId>
             <version>33.7.1-jre</version>
         </dependency>
+        <!-- Guava 33.4+ depends on JSpecify, a platform artifact that must not be bundled -->
+        <dependency>
+            <groupId>org.jspecify</groupId>
+            <artifactId>jspecify</artifactId>
+            <scope>provided</scope>
+        </dependency>
         <dependency>
             <groupId>com.atlassian</groupId>
             <artifactId>atlassian-app-cloud-migration-listener</artifactId>
-            <version>1.8.8</version>
+            <version>1.8.9</version>
         </dependency>
         <dependency>
             <groupId>com.google.code.gson</groupId>
@@ -190,7 +206,7 @@
                     <compressJs>false</compressJs>
                     <compressCss>false</compressCss>
                     <compressResources>false</compressResources>
-                    <jvmArgs>-Xms1g -Xmx2g -server</jvmArgs>
+                    <jvmArgs>-Xms2g -Xmx6g -server</jvmArgs>
                     <systemPropertyVariables>
                         <upm.plugin.upload.enabled>true</upm.plugin.upload.enabled>
                         <!-- set to false if you want to test app signing -->
@@ -214,9 +230,6 @@
                         <Spring-Context>*</Spring-Context>
                     </instructions>
                     <banningExcludes>
-                        <exclude>com.fasterxml.jackson.core:jackson-annotations</exclude>
-                        <exclude>com.fasterxml.jackson.core:jackson-databind</exclude>
-                        <exclude>com.fasterxml.jackson.core:jackson-core</exclude>
                         <exclude>com.google.guava:guava</exclude>
                         <exclude>com.google.code.findbugs:jsr305</exclude>
                         <exclude>com.google.code.gson:gson</exclude>
@@ -326,14 +339,13 @@
         <java.source.version>25</java.source.version>
         <java.target.version>25</java.target.version>
         <atlassian.plugin.key>com.atlassian.plugins.confluence.markdown.confluence-markdown-macro</atlassian.plugin.key>
-        <platform.version>7.0.5</platform.version>
-        <confluence.version>10.0.2</confluence.version>
-        <confluence.data.version>10.0.2</confluence.data.version>
+        <platform.version>9.0.8</platform.version>
+        <confluence.version>11.0.1</confluence.version>
+        <confluence.data.version>11.0.1</confluence.data.version>
         <amps.version>9.12.6</amps.version>
         <plugin.testrunner.version>2.0.6</plugin.testrunner.version>
-        <atlassian.spring.scanner.version>5.0.2</atlassian.spring.scanner.version>
+        <atlassian.spring.scanner.version>7.0.0</atlassian.spring.scanner.version>
         <flexmark.version>0.64.8</flexmark.version>
-        <jackson.version>2.18.11</jackson.version>
     </properties>
     <scm>
         <connection>scm:git:git@bitbucket.org:atlasauthority/markdown-macro-for-confluence.git</connection>

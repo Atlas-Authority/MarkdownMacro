@@ -99,6 +99,15 @@
         <resource type="download" name="markdown-mermaid-render.js" location="js/markdown-mermaid-render.js"/>
     </web-resource>
 
+    <!-- Post-render behaviour for the macros; replaces inline <script>/<style> blocked by CSP -->
+    <web-resource key="markdown-macro-init" name="Markdown Macro Init">
+        <dependency>com.atlassian.auiplugin:ajs</dependency>
+        <dependency>com.atlassian.plugins.confluence.markdown.confluence-markdown-macro:highlightjs</dependency>
+        <dependency>com.atlassian.plugins.confluence.markdown.confluence-markdown-macro:markdown-mermaid-render</dependency>
+        <resource type="download" name="markdown-macro-render.css" location="css/markdown-macro-render.css"/>
+        <resource type="download" name="markdown-macro-init.js" location="js/markdown-macro-init.js"/>
+    </web-resource>
+
     <web-resource key="markdown-configure-resources" name="Markdown Admin Configuration Resources">
         <dependency>com.atlassian.auiplugin:ajs</dependency>
 
@@ -131,7 +140,7 @@
     <rest-migration key="rest-migration-key">
         <rest-v2/>
     </rest-migration>
-    <rest key="markdown-from-url-rest-endpoint" path="/markdown-from-url" version="1.0">
+    <rest key="markdown-from-url-rest-endpoint" path="/markdown-from-url" version="1.0" use-jackson="3">
         <description>Markdown From Url REST Endpoint</description>
     </rest>
 

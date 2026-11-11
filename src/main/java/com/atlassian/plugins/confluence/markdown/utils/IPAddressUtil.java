@@ -18,12 +18,12 @@ public class IPAddressUtil {
      */
     public static byte[] textToNumericFormatV4(String src)
     {
-        byte[] res = new byte[INADDR4SZ];
+        final byte[] res = new byte[INADDR4SZ];
 
         long tmpValue = 0;
         int currByte = 0;
 
-        int len = src.length();
+        final int len = src.length();
         if (len == 0 || len > 15) {
             return null;
         }
@@ -53,7 +53,7 @@ public class IPAddressUtil {
          * translated into the remaining bytes in the array.
          */
         for (int i = 0; i < len; i++) {
-            char c = src.charAt(i);
+            final char c = src.charAt(i);
             if (c == '.') {
                 if (tmpValue < 0 || tmpValue > 0xff || currByte == 3) {
                     return null;
@@ -61,7 +61,7 @@ public class IPAddressUtil {
                 res[currByte++] = (byte) (tmpValue & 0xff);
                 tmpValue = 0;
             } else {
-                int digit = Character.digit(c, 10);
+                final int digit = Character.digit(c, 10);
                 if (digit < 0) {
                     return null;
                 }
@@ -106,11 +106,11 @@ public class IPAddressUtil {
         char ch;
         boolean saw_xdigit;
         int val;
-        char[] srcb = src.toCharArray();
-        byte[] dst = new byte[INADDR16SZ];
+        final char[] srcb = src.toCharArray();
+        final byte[] dst = new byte[INADDR16SZ];
 
         int srcb_length = srcb.length;
-        int pc = src.indexOf ("%");
+        final int pc = src.indexOf ("%");
         if (pc == srcb_length -1) {
             return null;
         }
@@ -130,7 +130,7 @@ public class IPAddressUtil {
         val = 0;
         while (i < srcb_length) {
             ch = srcb[i++];
-            int chval = Character.digit(ch, 16);
+            final int chval = Character.digit(ch, 16);
             if (chval != -1) {
                 val <<= 4;
                 val |= chval;
@@ -158,7 +158,7 @@ public class IPAddressUtil {
                 continue;
             }
             if (ch == '.' && ((j + INADDR4SZ) <= INADDR16SZ)) {
-                String ia4 = src.substring(curtok, srcb_length);
+                final String ia4 = src.substring(curtok, srcb_length);
                 /* check this IPv4 address has 3 dots, ie. A.B.C.D */
                 int dot_count = 0, index=0;
                 while ((index = ia4.indexOf ('.', index)) != -1) {
@@ -168,7 +168,7 @@ public class IPAddressUtil {
                 if (dot_count != 3) {
                     return null;
                 }
-                byte[] v4addr = textToNumericFormatV4(ia4);
+                final byte[] v4addr = textToNumericFormatV4(ia4);
                 if (v4addr == null) {
                     return null;
                 }
@@ -188,7 +188,7 @@ public class IPAddressUtil {
         }
 
         if (colonp != -1) {
-            int n = j - colonp;
+            final int n = j - colonp;
 
             if (j == INADDR16SZ)
                 return null;
@@ -200,7 +200,7 @@ public class IPAddressUtil {
         }
         if (j != INADDR16SZ)
             return null;
-        byte[] newdst = convertFromIPv4MappedAddress(dst);
+        final byte[] newdst = convertFromIPv4MappedAddress(dst);
         if (newdst != null) {
             return newdst;
         } else {
@@ -218,7 +218,7 @@ public class IPAddressUtil {
      */
     public static byte[] convertFromIPv4MappedAddress(byte[] addr) {
         if (isIPv4MappedAddress(addr)) {
-            byte[] newAddr = new byte[INADDR4SZ];
+            final byte[] newAddr = new byte[INADDR4SZ];
             System.arraycopy(addr, 12, newAddr, 0, INADDR4SZ);
             return newAddr;
         }

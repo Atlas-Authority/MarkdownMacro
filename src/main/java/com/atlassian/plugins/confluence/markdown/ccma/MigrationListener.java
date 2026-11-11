@@ -11,8 +11,8 @@ import com.atlassian.plugin.spring.scanner.annotation.export.ExportAsService;
 import com.atlassian.plugin.spring.scanner.annotation.imports.ConfluenceImport;
 import org.springframework.beans.factory.annotation.Value;
 
-import javax.inject.Inject;
-import javax.inject.Named;
+import jakarta.inject.Inject;
+import jakarta.inject.Named;
 import java.util.*;
 
 import static com.atlassian.migration.app.AccessScope.*;
@@ -67,7 +67,7 @@ public class MigrationListener implements DiscoverableForgeListener {
 
     @Override
     public Set<AccessScope> getDataAccessScopes() {
-        final Set<AccessScope> accessScopes = new HashSet<>();
+        final var accessScopes = new HashSet<AccessScope>();
         accessScopes.add(APP_DATA_OTHER);
         accessScopes.add(MIGRATION_TRACING_PRODUCT);
         accessScopes.add(MIGRATION_TRACING_IDENTITY);
